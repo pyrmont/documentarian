@@ -106,7 +106,11 @@
   (string "# " module-name " API\n\n"
           (-> (map (fn [item]
                      (string "[`" (item :name) "`](#"
-                             (string/replace-all "/" "" (item :name)) ")"))
+                             (->> (item :name)
+                                  (string/replace-all "/" "")
+                                  (string/replace-all "!" "")
+                                  (string/replace-all "?" ""))
+                             ")"))
                    items)
               (string/join ",\n"))
           "\n\n" (string/join elements "\n\n\n") "\n"))
