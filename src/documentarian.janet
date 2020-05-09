@@ -1,8 +1,22 @@
 (import spork/misc :as spork)
 
+
+(def- *magic-indent*
+  ```
+  Janet indents all but the first line in docstrings by two spaces. For
+  dedenting to work properly, we need to indent this initial line by
+  the same number of spaces.
+  ```
+  "  ")
+
+
 (var- include-private? false)
 
+
 (defn- item-details
+  ```
+  Create a table of metadata
+  ```
   [name meta]
   (let [[file line col] (get meta :source-map)
         value           (get meta :value)
@@ -13,7 +27,7 @@
         docs            (get meta :doc)
         [sig docstring] (if (string/find "\n\n" docs)
                           (->> docs
-                               (string "  ")
+                               (string *magic-indent*)
                                (spork/dedent)
                                (|(string/split "\n\n" $ 0 2)))
                           [nil docs])]
@@ -28,11 +42,19 @@
 
 
 (defn- link
+  ```
+  Create a link to a specific line in a file
+
+  This currently assumes a directory structure that is used by GitHub.
+  ```
   [{:file file :line line} base]
   (string base "/blob/master/" file "#L" line))
 
 
 (defn- validate-project-data
+  ```
+  Check that the data in the project.janet file includes everything we need
+  ```
   [data]
   (unless (and (get data :project)
                (get data :source))
@@ -41,22 +63,30 @@
 
 
 (defn- parse-project
-  []
-  (def contents (slurp "project.janet"))
-  (def p (parser/new))
-  (def result @{})
+  ```
+  Parse a project.janet file
 
-  (parser/consume p contents)
-  (while (parser/has-more p)
-    (let [form (parser/produce p)
-          head (first form)
-          tail (tuple/slice form 1)
-          key  (-> (string/split "-" head) last keyword)]
-      (put result key (struct ;tail))))
-  (validate-project-data result))
+  This function returns a table of the values in the project file. The keys are
+  the sections but without the leading `declare-` and inserted as keywords.
+  ```
+  []
+  (let [contents (slurp "project.janet")
+        p        (parser/new)
+        result    @{}]
+    (parser/consume p contents)
+    (while (parser/has-more p)
+      (let [form (parser/produce p)
+            head (first form)
+            tail (tuple/slice form 1)
+            key  (-> (string/split "-" head) last keyword)]
+        (put result key (struct ;tail))))
+    (validate-project-data result)))
 
 
 (defn- extract-from-dir
+  ```
+  Extract the bindings for the Janet files in a directory
+  ```
   [dir extract-fn]
   (reduce (fn [bindings path]
             (->> (string dir "/" path) (extract-fn) (merge bindings)))
@@ -65,6 +95,9 @@
 
 
 (defn- extract-bindings
+  ```
+  Extract the bindings for sources
+  ```
   [source]
   (if (string/has-suffix? ".janet" source)
     (let [path (string/replace ".janet" "" source)
@@ -74,8 +107,11 @@
     (extract-from-dir source extract-bindings)))
 
 
-(defn- document-bindings
-  [set-of-bindings module-name url]
+(defn- bindings->items
+  ```
+  Convert the data structure used by Janet to a simple table
+  ```
+  [set-of-bindings]
   (def items @[])
   (each [filename bindings] (pairs set-of-bindings)
     (def module (->> (string/replace "src/" "" filename)
@@ -85,8 +121,13 @@
               include-private?)
         (array/push items (item-details (string module "/" name) meta)))))
 
-  (sort-by (fn [item] (get item :name)) items)
+  (sort-by (fn [item] (get item :name)) items))
 
+(defn- items->markdown
+  ```
+  Create the Markdown-formatted strings
+  ```
+  [items module-name url]
   (var index 0)
   (def elements (seq [item :in items :before (++ index)]
                   (string "## "  (item :name) "\n\n"
@@ -127,12 +168,8 @@
 
   (def sources (-> (get project-data :source) (get :source)))
 
-  (def bindings (reduce
-                  (fn [bindings source]
-                    (merge bindings (extract-bindings source)))
-                  @{}
-                  sources))
-
-  (def document (document-bindings bindings name url))
+  (def bindings (reduce (fn [b s] (merge b (extract-bindings s))) @{} sources))
+  (def items (bindings->items bindings))
+  (def document (items->markdown items name url))
 
   (spit "api.md" document))
