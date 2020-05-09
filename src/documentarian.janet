@@ -50,10 +50,9 @@
   (while (parser/has-more p)
     (let [form (parser/produce p)
           head (first form)
-          tail (tuple/slice form 1)]
-      (case head
-        'declare-project (put result :project (struct ;tail))
-        'declare-source  (put result :source (struct ;tail)))))
+          tail (tuple/slice form 1)
+          key  (-> (string/split "-" head) last keyword)]
+      (put result key (struct ;tail))))
   (validate-project-data result))
 
 
