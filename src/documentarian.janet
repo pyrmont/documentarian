@@ -1,3 +1,12 @@
+### Documentarian
+
+## A document generation tool for Janet projects
+
+## by Michael Camilleri
+## 10 May 2020
+
+## Thanks to Andrew Chambers for his feedback and suggestions.
+
 (import spork/misc :as spork)
 
 
