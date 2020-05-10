@@ -53,8 +53,6 @@
 (defn- link
   ```
   Create a link to a specific line in a file
-
-  This currently assumes a directory structure that is used by GitHub.
   ```
   [{:file file :line line} base]
   (string base file "#L" line))
