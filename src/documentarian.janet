@@ -7,6 +7,7 @@
 
 ## Thanks to Andrew Chambers for his feedback and suggestions.
 
+
 (import spork/misc :as spork)
 
 
@@ -86,7 +87,7 @@
             head (first form)
             tail (tuple/slice form 1)]
         (when (string/has-prefix? "declare-" head)
-          (let [key  (-> (string/replace "declare-" "" head) keyword)]
+          (let [key (-> (string/replace "declare-" "" head) keyword)]
             (put result key (struct ;tail))))))
     (validate-project-data result)))
 
