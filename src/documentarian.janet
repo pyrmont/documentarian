@@ -77,9 +77,10 @@
     (while (parser/has-more p)
       (let [form (parser/produce p)
             head (first form)
-            tail (tuple/slice form 1)
-            key  (-> (string/split "-" head) last keyword)]
-        (put result key (struct ;tail))))
+            tail (tuple/slice form 1)]
+        (when (string/has-prefix? "declare-" head)
+          (let [key  (-> (string/replace "declare-" "" head) keyword)]
+            (put result key (struct ;tail))))))
     (validate-project-data result)))
 
 
