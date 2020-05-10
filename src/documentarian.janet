@@ -48,7 +48,7 @@
   This currently assumes a directory structure that is used by GitHub.
   ```
   [{:file file :line line} base]
-  (string base "/blob/master/" file "#L" line))
+  (string base file "#L" line))
 
 
 (defn- validate-project-data
@@ -164,7 +164,7 @@
   (def project-data (parse-project))
 
   (def name (-> (get project-data :project) (get :name)))
-  (def url (-> (get project-data :project) (get :url)))
+  (def url "")
 
   (def sources (-> (get project-data :source) (get :source)))
 
