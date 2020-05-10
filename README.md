@@ -9,9 +9,9 @@ can be included in your repository and read easily on GitHub.
 ## Prerequisites
 
 Documentarian depends on your project having a `project.janet` file that
-contains `:name` and `:url` keys in the `declare-project` section and a
-`:source` key in the `declare-source` section. The `:source` key can be
-associated with individual Janet files or a directory containing Janet files.
+contains a `:name` key in the `declare-project` section and a `:source` key in
+the `declare-source` section. The `:source` key can be associated with
+individual Janet files or a directory containing Janet files.
 
 Because the API document is generated in Markdown, you can include Markdown in
 your docstrings. Don't forget that Janet supports `` ` ``-delimited
