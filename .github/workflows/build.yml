@@ -31,6 +31,8 @@ jobs:
       run: mkdir modules
     - name: set JANET_PATH
       run: echo "::set-env name=JANET_PATH::modules"
+    - name: set JANET_LIBPATH
+      run: echo "::set-env name=JANET_LIBPATH::."
     - name: install dependencies
       run: /usr/bin/env jpm deps
     - name: run tests
