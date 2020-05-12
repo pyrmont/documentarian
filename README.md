@@ -6,12 +6,14 @@ Documentarian makes it easy to take the docstrings you've already written for
 your code and turn them into a simple Markdown-formatted document. This document
 can be included in your repository and read easily on GitHub.
 
-## Prerequisites
+## Requirements
 
-Documentarian depends on your project having a `project.janet` file that
-contains a `:name` key in the `declare-project` section and a `:source` key in
-the `declare-source` section. The `:source` key can be associated with
-individual Janet files or a directory containing Janet files.
+Documentarian requires Janet 1.9.0 or higher.
+
+Documentarian also depends on your project having a `project.janet` file that
+contains a `:name` key in the `declare-project` form and a `:source` key in the
+`declare-source` form. The `:source` key can be associated with individual
+Janet files or a directory containing Janet files.
 
 Because the API document is generated in Markdown, you can include Markdown in
 your docstrings. Don't forget that Janet supports `` ` ``-delimited
