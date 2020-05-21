@@ -82,15 +82,15 @@
 (deftest markdown-output
   (def expected
     (string "# Example API\n\n"
-            "[example/example](#exampleexample)\n, [example/example2](#exampleexample2)\n\n\n"
+            "[example/example](#exampleexample)\n, [example/example2](#exampleexample2)\n\n"
             "## example/example\n\n"
             "**function**  | [source][1]\n\n\n"
             "This is an example.\n\n"
-            "[1]: example.janet#L1\n\n\n"
+            "[1]: example.janet#L1\n\n"
             "## example/example2\n\n"
             "**function**  | [source][2]\n\n\n"
             "This is an example.\n\n"
-            "[2]: example.janet#L2\n\n\n"))
+            "[2]: example.janet#L2\n\n"))
   (def items
     [{:name "example/example" :kind :function :docstring "This is an example." :file "example.janet" :line 1}
      {:name "example/example2" :kind :function :docstring "This is an example." :file "example.janet" :line 2}])
