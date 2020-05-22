@@ -35,15 +35,28 @@ The `documentarian` binary is in the `build` directory.
 
 ## Usage
 
-Documentarian generates a Markdown-formatted file, `api.md`. From the root of
-your Janet project, run:
+If you have your code in a directory `src` at the top of your project, you can
+run Documentarian like so:
 
 ```console
 $ /path/to/documentarian
 ```
 
-By default, Documentarian will not create documentation for elements marked
-private in your source code. You can override this with the `-p` switch.
+Your documentation will be in a file called `api.md`.
+
+### Command-Line Arguments
+
+Documentarian supports the following command-line arguments:
+
+```
+ Optional:
+ -d, --defix VALUE=src                       Remove a directory name from function names.
+ -e, --echo                                  Prints output to stdout.
+ -h, --help                                  Show this help message.
+ -i, --input VALUE=project.janet             Specify the project file.
+ -o, --output VALUE=api.md                   Specify the output file.
+ -p, --private                               Include private values.
+```
 
 ## Bugs
 
