@@ -8,11 +8,35 @@
 ## Thanks to Andrew Chambers for his feedback and suggestions.
 
 
+(import argparse)
 (import spork/misc :as spork)
-(import musty :as musty)
+(import musty)
 
 
+(def- sep (if (= :windows (os/which)) "\\" "/"))
 (var- include-private? false)
+
+
+(def- arg-settings
+  ["A document generation tool for Janet projects."
+   "defix" {:kind :option
+            :short "d"
+            :help "Remove a directory name from function names."
+            :default "src"}
+   "echo"  {:kind :flag
+            :short "e"
+            :help "Prints output to stdout."}
+   "input" {:kind :option
+            :short "i"
+            :help "Specify the project file."
+            :default "project.janet"}
+   "output" {:kind :option
+             :short "o"
+             :help "Specify the output file."
+             :default "api.md"}
+   "private" {:kind :flag
+              :short "p"
+              :help "Include private values."}])
 
 
 (def- template
@@ -31,11 +55,11 @@
 
     {{#sig}}
     ```janet
-    {{sig}}
+    {{&sig}}
     ```
     {{/sig}}
 
-    {{docstring}}
+    {{&docstring}}
 
     {{#link}}
     [{{num}}]: {{link}}
@@ -49,26 +73,31 @@
   ```
   Create a link to a specific line in a file
   ```
-  [{:file file :line line} base]
-  (string base file "#L" line))
+  [{:file file :line line} local-parent remote-parent]
+  (if (nil? file)
+    nil
+    (if (and local-parent remote-parent (not (empty? local-parent)))
+      (-> (string/replace local-parent remote-parent file)
+          (string "#L" line))
+      (string file "#L" line))))
 
 
 (defn item->element
   ```
   Prepare the fields for the template
   ```
-  [item num]
+  [item num opts]
   {:num       num
    :first     (one? num)
-   :name      (item :name)
+   :name      (string (item :ns) (item :name))
    :kind      (string (item :kind))
    :private?  (item :private?)
    :sig       (or (item :sig)
                   (and (not (nil? (item :value)))
                        (string/format "%q" (item :value))))
    :docstring (item :docstring)
-   :link      (link item "")
-   :in-link   (->> (item :name)
+   :link      (link item (opts :local-parent) (opts :remote-parent))
+   :in-link   (->> (string (item :ns) (item :name))
                    (string/replace-all "/" "")
                    (string/replace-all "!" "")
                    (string/replace-all "?" ""))})
@@ -78,19 +107,29 @@
   ```
   Create the Markdown-formatted strings
   ```
-  [items module-name url]
+  [items module-name opts]
   (let [elements (seq [i :range [0 (length items)]]
-                   (item->element (items i) (+ 1 i)))]
+                   (item->element (items i) (+ 1 i) opts))]
     (musty/render template {:module module-name :elements elements})))
+
+
+(defn- source-map
+  ```
+  Determine the source-map for a given set of metadata
+  ```
+  [meta]
+  (if (meta :source-map)
+    (meta :source-map)
+    [nil nil nil]))
 
 
 (defn- item-details
   ```
   Create a table of metadata
   ```
-  [name meta]
+  [name ns meta]
   (let [value           (or (meta :value) (first (meta :ref)))
-        [file line col] (or (meta :source-map) [nil nil nil])
+        [file line col] (source-map meta)
         kind            (if (meta :macro) :macro (type value))
         private?        (meta :private)
         docs            (meta :doc)
@@ -99,6 +138,7 @@
                                (map spork/dedent))
                           [nil docs])]
     {:name      name
+     :ns        ns
      :value     value
      :kind      kind
      :private?  private?
@@ -115,11 +155,11 @@
   [set-of-bindings]
   (def items @[])
   (each [filename bindings] (pairs set-of-bindings)
-    (def module (->> filename (string/replace "src/" "") (string/replace ".janet" "")))
+    (def ns (string (string/replace ".janet" "" filename) "/"))
     (each [name meta] (pairs bindings)
       (if (or (not (get meta :private))
               include-private?)
-        (array/push items (item-details (string module "/" name) meta)))))
+        (array/push items (item-details name ns meta)))))
   (sort-by (fn [item] (get item :name)) items))
 
 
@@ -127,32 +167,32 @@
   ```
   Extract the bindings for sources
   ```
-  [source]
+  [source source-path]
   (when (string/has-suffix? ".janet" source)
-    (let [path (string/replace ".janet" "" source)
-          bindings (require path)]
+    (let [path     (string/replace ".janet" "" source)
+          bindings (require path)
+          file     (if (empty? source-path)
+                     source
+                     (string/replace source-path "" source))]
       (each k [:current-file :source] (put bindings k nil))
-      {source bindings})))
+      {file bindings})))
 
 
 (defn gather-files
   ```
-  Replace mixture of files and directries with files
+  Replace mixture of files and directories with files
   ```
   [paths &opt parent]
   (default parent "")
-  (def sep (if (= :windows (os/which)) "\\" "/"))
   (mapcat
     (fn [path]
-      (let [p (string parent
-                      (if (empty? parent) "" sep)
-                      path)]
+      (let [p (string parent path)]
         (case (os/stat p :mode)
           :file
           p
 
           :directory
-          (gather-files (os/dir p) p))))
+          (gather-files (os/dir p) (string p sep)))))
     paths))
 
 
@@ -174,8 +214,7 @@
   This function returns a table of the values in the project file. The keys are
   the sections but without the leading `declare-` and inserted as keywords.
   ```
-  [&opt project-file]
-  (default project-file "project.janet")
+  [project-file]
   (let [contents (slurp project-file)
         p        (parser/new)
         result    @{}]
@@ -190,17 +229,56 @@
     (validate-project-data result)))
 
 
-(defn main
-  [& args]
-  (set include-private? (and (get args 1) (= "-p" (get args 1))))
+(defn- detect-dir
+  ```
+  Determine the project directory relative to the path to the project file
+  ```
+  [project-file]
+  (let [seps (string/find-all sep project-file)]
+    (if (empty? seps)
+      ""
+      (string/slice project-file 0 (+ 1 (array/peek seps))))))
 
-  (def project-data (parse-project))
+
+(defn- generate-doc
+  ```
+  Generate the document based on various inputs
+  ```
+  [&keys {:echo echo?
+          :output output-file
+          :private private
+          :project project-file
+          :source-dir source-dir}]
+  (when private
+    (set include-private? true))
+
+  (def project-path (detect-dir project-file))
+  (def source-path (string project-path (if (empty? source-dir)
+                                          ""
+                                          (string source-dir sep))))
+
+  (def project-data (parse-project project-file))
 
   (def name (get-in project-data [:project :name]))
-  (def sources (-> (get-in project-data [:source :source]) gather-files))
+  (def sources (-> (get-in project-data [:source :source]) (gather-files project-path)))
 
-  (def bindings (reduce (fn [b s] (merge b (extract-bindings s))) @{} sources))
+  (def bindings (reduce (fn [b s] (merge b (extract-bindings s source-path))) @{} sources))
   (def items (bindings->items bindings))
-  (def document (items->markdown items name ""))
+  (def document (items->markdown items name {:local-parent project-path
+                                             :remote-parent ""}))
 
-  (spit "api.md" document))
+  (if echo?
+    (print document)
+    (spit output-file document)))
+
+
+(defn main
+  [& args]
+  (let [result (argparse/argparse ;arg-settings)]
+    (unless result
+      (os/exit 1))
+    (generate-doc :echo (result "echo")
+                  :output (result "output")
+                  :private (result "private")
+                  :project (result "input")
+                  :source-dir (result "defix"))))

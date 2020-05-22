@@ -3,7 +3,7 @@
 
 
 (deftest parse-project
-  (is (thrown? (doc/parse-project))))
+  (is (thrown? (doc/parse-project "project.janet"))))
 
 
 (deftest parse-project-with-file
@@ -15,7 +15,7 @@
 
 (deftest extract-bindings-from-defs
   (def source "fixtures/defn.janet")
-  (def [bindings-key bindings-val] (-> (doc/extract-bindings source) pairs first))
+  (def [bindings-key bindings-val] (-> (doc/extract-bindings source "") pairs first))
   (def [item-key item-val] (-> (pairs bindings-val) first))
   (is (= source bindings-key))
   (is (= 'example item-key))
@@ -25,7 +25,7 @@
 
 (deftest extract-bindings-from-declared-vars
   (def source "fixtures/varfn.janet")
-  (def [bindings-key bindings-val] (-> (doc/extract-bindings source) pairs first))
+  (def [bindings-key bindings-val] (-> (doc/extract-bindings source "") pairs first))
   (def fn-name 'example)
   (def [item-key item-val] (->> (pairs bindings-val) (find |(= fn-name (first $)))))
   (is (= source bindings-key))
@@ -36,7 +36,7 @@
 
 (deftest extract-bindings-from-declared-vars
   (def source "fixtures/varfn.janet")
-  (def [bindings-key bindings-val] (-> (doc/extract-bindings source) pairs first))
+  (def [bindings-key bindings-val] (-> (doc/extract-bindings source "") pairs first))
   (def fn-name 'example2)
   (def [item-key item-val] (->> (pairs bindings-val) (find |(= fn-name (first $)))))
   (is (= source bindings-key))
@@ -66,7 +66,8 @@
                   :kind :string
                   :docstring "An example"
                   :file "example.janet"
-                  :name "example/example"}])
+                  :ns "example/"
+                  :name 'example}])
   (is (= expected result))
   (set bindings {"example.janet" {'example {:ref ["Example"]}}})
   (set result (tuple ;(doc/bindings->items bindings)))
@@ -75,7 +76,8 @@
                   :kind :string
                   :docstring nil
                   :file nil
-                  :name "example/example"}])
+                  :ns "example/"
+                  :name 'example}])
   (is (= expected result)))
 
 
@@ -92,9 +94,9 @@
             "This is an example.\n\n"
             "[2]: example.janet#L2\n\n"))
   (def items
-    [{:name "example/example" :kind :function :docstring "This is an example." :file "example.janet" :line 1}
-     {:name "example/example2" :kind :function :docstring "This is an example." :file "example.janet" :line 2}])
-  (is (= expected (doc/items->markdown items "Example" ""))))
+    [{:name 'example :ns "example/" :kind :function :docstring "This is an example." :file "example.janet" :line 1}
+     {:name 'example2 :ns "example/" :kind :function :docstring "This is an example." :file "example.janet" :line 2}])
+  (is (= expected (doc/items->markdown items "Example" {}))))
 
 
 (run-tests!)
