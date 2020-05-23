@@ -118,9 +118,14 @@
   Determine the source-map for a given set of metadata
   ```
   [meta]
-  (if (meta :source-map)
-    (meta :source-map)
-    [nil nil nil]))
+  (or (meta :source-map)
+      (let [ref (-?> (meta :ref) first)]
+        (if (= :function (type ref))
+          (let [code       (disasm ref)
+                file       (code 'source)
+                [line col] (-> (code 'sourcemap) first)]
+            [file line col])
+          [nil nil nil]))))
 
 
 (defn- item-details
@@ -154,13 +159,25 @@
   ```
   [set-of-bindings]
   (def items @[])
+  (def possible-aliases @{})
+  # This is a hack to handle case where module imports from another module
+  (defn ns-or-alias [name ns]
+    (if-let [possible-alias (get possible-aliases name)
+             alias?         (string/has-prefix? possible-alias ns)]
+      possible-alias
+      ns))
   (each [filename bindings] (pairs set-of-bindings)
     (def ns (string (string/replace ".janet" "" filename) "/"))
     (each [name meta] (pairs bindings)
-      (if (or (not (get meta :private))
-              include-private?)
-        (array/push items (item-details name ns meta)))))
-  (sort-by (fn [item] (get item :name)) items))
+      (when (or (not (get meta :private))
+                include-private?)
+        (if (one? (length meta))
+          (put possible-aliases name ns)
+          (->> (item-details name
+                             (ns-or-alias name ns)
+                             meta)
+               (array/push items))))))
+  (sort-by (fn [item] (string (item :ns) (item :name))) items))
 
 
 (defn extract-bindings

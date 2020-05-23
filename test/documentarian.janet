@@ -69,11 +69,12 @@
                   :ns "example/"
                   :name 'example}])
   (is (= expected result))
-  (set bindings {"example.janet" {'example {:ref ["Example"]}}})
+  (set bindings {"example.janet" {'example {:private false :ref ["Example"]}}})
   (set result (tuple ;(doc/bindings->items bindings)))
   (set expected [{:line nil
                   :value "Example"
                   :kind :string
+                  :private? false
                   :docstring nil
                   :file nil
                   :ns "example/"
