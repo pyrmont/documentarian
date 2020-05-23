@@ -1,5 +1,7 @@
 # Documentarian
 
+[![Build Status](https://github.com/pyrmont/documentarian/workflows/build/badge.svg)](https://github.com/pyrmont/documentarian/actions?query=workflow%3Abuild)
+
 Documentarian is a minimal documentation generation tool for Janet projects.
 
 Documentarian makes it easy to take the docstrings you've already written for
