@@ -23,7 +23,7 @@
   (is (= [source 1 1] (item-val :source-map))))
 
 
-(deftest extract-bindings-from-declared-vars
+(deftest extract-bindings-from-declared-vars-v1
   (def source "fixtures/varfn.janet")
   (def [bindings-key bindings-val] (-> (doc/extract-bindings source "") pairs first))
   (def fn-name 'example)
@@ -34,7 +34,7 @@
   (is (= [source 1 1] (item-val :source-map))))
 
 
-(deftest extract-bindings-from-declared-vars
+(deftest extract-bindings-from-declared-vars-v2
   (def source "fixtures/varfn.janet")
   (def [bindings-key bindings-val] (-> (doc/extract-bindings source "") pairs first))
   (def fn-name 'example2)
