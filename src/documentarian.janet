@@ -263,7 +263,7 @@
   [project-file]
   (let [seps (string/find-all sep project-file)]
     (if (empty? seps)
-      ""
+      "./"
       (string/slice project-file 0 (+ 1 (array/peek seps))))))
 
 
@@ -286,9 +286,13 @@
 
   (def project-data (parse-project project-file))
 
-  (def sources (-> (get-in project-data [:source :source]) (gather-files project-path)))
+  (def sources (-> (get-in project-data [:source :source])
+                   (gather-files project-path)))
 
-  (def bindings (reduce (fn [b s] (merge b (extract-bindings s source-path))) @{} sources))
+  (def bindings (reduce (fn [b s]
+                          (merge b (extract-bindings s source-path)))
+                        @{}
+                        sources))
   (def items (bindings->items bindings))
   (def document (items->markdown items
                                  {:name (get-in project-data [:project :name])

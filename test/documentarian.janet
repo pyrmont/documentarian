@@ -16,9 +16,12 @@
 
 (deftest extract-bindings-from-defs
   (def source "fixtures/defn.janet")
-  (def [bindings-key bindings-val] (-> (doc/extract-bindings source "") pairs first))
+  (def [bindings-key bindings-val] (-> (string "../" source)
+                                       (doc/extract-bindings "")
+                                       (pairs)
+                                       (first)))
   (def [item-key item-val] (-> (pairs bindings-val) first))
-  (is (= source bindings-key))
+  (is (= (string "../" source) bindings-key))
   (is (= 'example item-key))
   (is (= "(example)\n\nThis is an example function" (item-val :doc)))
   (is (= [source 1 1] (item-val :source-map))))
@@ -26,10 +29,13 @@
 
 (deftest extract-bindings-from-declared-vars-v1
   (def source "fixtures/varfn.janet")
-  (def [bindings-key bindings-val] (-> (doc/extract-bindings source "") pairs first))
+  (def [bindings-key bindings-val] (-> (string "../" source)
+                                       (doc/extract-bindings "")
+                                       (pairs)
+                                       (first)))
   (def fn-name 'example)
   (def [item-key item-val] (->> (pairs bindings-val) (find |(= fn-name (first $)))))
-  (is (= source bindings-key))
+  (is (= (string "../" source) bindings-key))
   (is (= fn-name item-key))
   (is (= "(example)\n\nThis is an example function" (item-val :doc)))
   (is (= [source 1 1] (item-val :source-map))))
@@ -37,10 +43,13 @@
 
 (deftest extract-bindings-from-declared-vars-v2
   (def source "fixtures/varfn.janet")
-  (def [bindings-key bindings-val] (-> (doc/extract-bindings source "") pairs first))
+  (def [bindings-key bindings-val] (-> (string "../" source)
+                                       (doc/extract-bindings "")
+                                       (pairs)
+                                       (first)))
   (def fn-name 'example2)
   (def [item-key item-val] (->> (pairs bindings-val) (find |(= fn-name (first $)))))
-  (is (= source bindings-key))
+  (is (= (string "../" source) bindings-key))
   (is (= fn-name item-key))
   (is (= "(example2)\n\nThis is an example function" (item-val :doc)))
   (is (= nil (item-val :source-map))))
