@@ -1,15 +1,4 @@
-### Documentarian
-
-## A document generation tool for Janet projects
-
-## by Michael Camilleri
-## 10 May 2020
-
-## Thanks to Andrew Chambers for his feedback and suggestions.
-
-
 (import argparse)
-(import spork/misc :as spork)
 (import musty)
 
 
@@ -21,7 +10,7 @@
   ["A document generation tool for Janet projects."
    "defix" {:kind :option
             :short "d"
-            :help "Remove a directory name from function names."
+            :help "Remove this prefix from binding names."
             :default "src"}
    "echo"  {:kind :flag
             :short "e"
@@ -40,33 +29,36 @@
 
 
 (def- template
-  (spork/dedent
-    ````
-    # {{module}} API
+  ````
+  # {{module-name}} API
+  {{#module-doc}}
 
-    {{#elements}}
-    {{^first}}, {{/first}}[{{name}}](#{{in-link}})
-    {{/elements}}
+  {{module-doc}}
+  {{/module-doc}}
 
-    {{#elements}}
-    ## {{name}}
+  {{#elements}}
+  {{^first}}, {{/first}}[{{name}}](#{{in-link}})
+  {{/elements}}
 
-    **{{kind}}** {{#private?}}| **private**{{/private?}} {{#link}}| [source][{{num}}]{{/link}}
+  {{#elements}}
+  ## {{name}}
 
-    {{#sig}}
-    ```janet
-    {{&sig}}
-    ```
-    {{/sig}}
+  **{{kind}}** {{#private?}}| **private**{{/private?}} {{#link}}| [source][{{num}}]{{/link}}
 
-    {{&docstring}}
+  {{#sig}}
+  ```janet
+  {{&sig}}
+  ```
+  {{/sig}}
 
-    {{#link}}
-    [{{num}}]: {{link}}
-    {{/link}}
+  {{&docstring}}
 
-    {{/elements}}
-    ````))
+  {{#link}}
+  [{{num}}]: {{link}}
+  {{/link}}
+
+  {{/elements}}
+  ````)
 
 
 (defn- link
@@ -107,10 +99,12 @@
   ```
   Create the Markdown-formatted strings
   ```
-  [items module-name opts]
+  [items module opts]
   (let [elements (seq [i :range [0 (length items)]]
                    (item->element (items i) (+ 1 i) opts))]
-    (musty/render template {:module module-name :elements elements})))
+    (musty/render template {:module-name (get module :name)
+                            :module-doc  (get module :doc)
+                            :elements    elements})))
 
 
 (defn- source-map
@@ -139,8 +133,7 @@
         private?        (meta :private)
         docs            (meta :doc)
         [sig docstring] (if (and docs (string/find "\n\n" docs))
-                          (->> (string/split "\n\n" docs 0 2)
-                               (map spork/dedent))
+                          (string/split "\n\n" docs 0 2)
                           [nil docs])]
     {:name      name
      :ns        ns
@@ -276,13 +269,15 @@
 
   (def project-data (parse-project project-file))
 
-  (def name (get-in project-data [:project :name]))
   (def sources (-> (get-in project-data [:source :source]) (gather-files project-path)))
 
   (def bindings (reduce (fn [b s] (merge b (extract-bindings s source-path))) @{} sources))
   (def items (bindings->items bindings))
-  (def document (items->markdown items name {:local-parent project-path
-                                             :remote-parent ""}))
+  (def document (items->markdown items
+                                 {:name (get-in project-data [:project :name])
+                                  :doc  (get-in project-data [:project :doc])}
+                                 {:local-parent  project-path
+                                  :remote-parent ""}))
 
   (if echo?
     (print document)

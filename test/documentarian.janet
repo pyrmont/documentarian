@@ -10,6 +10,7 @@
   (def result (doc/parse-project "fixtures/project.janet"))
   (is (= "Example" (get-in result [:project :name])))
   (is (= "https://github.com/pyrmont/example" (get-in result [:project :url])))
+  (is (= "This is an example of project-level\ndocumentation." (get-in result [:project :doc])))
   (is (= ["src/example.janet"] (get-in result [:source :source]))))
 
 
@@ -97,7 +98,7 @@
   (def items
     [{:name 'example :ns "example/" :kind :function :docstring "This is an example." :file "example.janet" :line 1}
      {:name 'example2 :ns "example/" :kind :function :docstring "This is an example." :file "example.janet" :line 2}])
-  (is (= expected (doc/items->markdown items "Example" {}))))
+  (is (= expected (doc/items->markdown items {:name "Example"} {}))))
 
 
 (run-tests!)
