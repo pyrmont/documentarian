@@ -89,9 +89,10 @@
                           name)
                (first)))
   (def i (or (get headings key) 0))
-  (def link (if (zero? i) key (string key "-" i)))
   (put headings key (inc i))
-  link)
+  (if (zero? i)
+    key
+    (string key "-" i)))
 
 
 (defn item->element
@@ -194,13 +195,12 @@
   ```
   Extract the bindings for sources
   ```
-  [source source-path]
+  [source paths]
   (when (string/has-suffix? ".janet" source)
     (let [path     (string/replace ".janet" "" source)
           bindings (require path)
-          file     (if (empty? source-path)
-                     source
-                     (string/replace source-path "" source))]
+          file     (->> (string/replace (paths :project) "" source)
+                        (|(if (empty? (paths :source)) $ (string/replace (paths :source) "" $))))]
       (each k [:current-file :source] (put bindings k nil))
       {file bindings})))
 
@@ -280,9 +280,7 @@
     (set include-private? true))
 
   (def project-path (detect-dir project-file))
-  (def source-path (string project-path (if (empty? source-dir)
-                                          ""
-                                          (string source-dir sep))))
+  (def source-path (if (empty? source-dir) "" (string source-dir sep)))
 
   (def project-data (parse-project project-file))
 
@@ -290,7 +288,7 @@
                    (gather-files project-path)))
 
   (def bindings (reduce (fn [b s]
-                          (merge b (extract-bindings s source-path)))
+                          (merge b (extract-bindings s {:project project-path :source source-path})))
                         @{}
                         sources))
   (def items (bindings->items bindings))
