@@ -4,6 +4,7 @@
 
 (def- sep (if (= :windows (os/which)) "\\" "/"))
 (var- include-private? false)
+(def- headings @{})
 
 
 (def- arg-settings
@@ -74,6 +75,25 @@
       (string file "#L" line))))
 
 
+(defn- in-link
+  ```
+  Create an internal link
+
+  ```
+  # Uses the algorithm at https://github.com/gjtorikian/html-pipeline/blob/main/lib/html/pipeline/toc_filter.rb
+  [name]
+  (def key (-> (peg/match ~{:main      (% (any (+ :kept :changed :ignored)))
+                            :kept      (<- (+ :w+ (set "_-")))
+                            :changed   (/ (<- " ") "-")
+                            :ignored   1}
+                          name)
+               (first)))
+  (def i (or (get headings key) 0))
+  (def link (if (zero? i) key (string key "-" i)))
+  (put headings key (inc i))
+  link)
+
+
 (defn item->element
   ```
   Prepare the fields for the template
@@ -89,10 +109,7 @@
                        (string/format "%q" (item :value))))
    :docstring (item :docstring)
    :link      (link item (opts :local-parent) (opts :remote-parent))
-   :in-link   (->> (string (item :ns) (item :name))
-                   (string/replace-all "/" "")
-                   (string/replace-all "!" "")
-                   (string/replace-all "?" ""))})
+   :in-link   (in-link (string (item :ns) (item :name)))})
 
 
 (defn items->markdown
