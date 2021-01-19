@@ -85,5 +85,8 @@ details.
 
 ## Thanks
 
-Special thanks to Andrew Chambers (@andrewchambers) and Zach Smith
-(@subsetpark) for their feedback and suggestions.
+Special thanks to Andrew Chambers ([@andrewchambers][]) and Zach Smith
+([@subsetpark][]) for their feedback and suggestions.
+
+[@andrewchambers]: https://github.com/andrewchambers
+[@subsetpark]: https://github.com/subsetpark
