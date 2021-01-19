@@ -6,11 +6,11 @@ Documentarian is a minimal documentation generation tool for Janet projects.
 
 Documentarian makes it easy to take the docstrings you've already written for
 your code and turn them into a simple Markdown-formatted document. This document
-can be included in your repository and read easily on GitHub.
+can be included in your repository and read easily on services like GitHub.
 
 ## Requirements
 
-Documentarian requires Janet 1.9.0 or higher.
+Documentarian requires Janet 1.14.1 or higher.
 
 Documentarian also depends on your project having a `project.janet` file that
 contains a `:name` key in the `declare-project` form and a `:source` key in the
@@ -35,16 +35,25 @@ $ jpm build
 
 The `documentarian` binary is in the `build` directory.
 
+## Installing
+
+After building, run:
+
+```console
+$ jpm install
+```
+
 ## Usage
 
-If you have your code in a directory `src` at the top of your project, you can
-run Documentarian like so:
+If you have your code in a directory `src` at the top-level of your project
+directory, you can run Documentarian from your project directory like so:
 
 ```console
 $ /path/to/documentarian
 ```
 
-Your documentation will be in a file called `api.md`.
+By default, your documentation is saved to a file called `api.md` in the
+current working directory.
 
 ### Command-Line Arguments
 
@@ -52,7 +61,7 @@ Documentarian supports the following command-line arguments:
 
 ```
  Optional:
- -d, --defix VALUE=src                       Remove a directory name from function names.
+ -d, --defix VALUE=src                       Remove this prefix from binding names.
  -e, --echo                                  Prints output to stdout.
  -h, --help                                  Show this help message.
  -i, --input VALUE=project.janet             Specify the project file.
@@ -73,3 +82,8 @@ Documentarian is licensed under the MIT Licence. See [LICENSE][] for more
 details.
 
 [LICENSE]: https://github.com/pyrmont/documentarian/blob/master/LICENSE
+
+## Thanks
+
+Special thanks to Andrew Chambers (@andrewchambers) and Zach Smith
+(@subsetpark) for their feedback and suggestions.
