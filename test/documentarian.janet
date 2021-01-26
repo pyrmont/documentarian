@@ -97,9 +97,9 @@
   (def expected
     (string "# Example API\n\n"
             "## example\n\n"
-            "[example](#exampleexample)\n, "
-            "[example*](#exampleexample-1)\n, "
-            "[example2](#exampleexample2)\n\n"
+            "[example](#example), "
+            "[example*](#example-1), "
+            "[example2](#example2)\n\n"
             "## example\n\n"
             "**function**  | [source][1]\n\n\n"
             "This is an example.\n\n"

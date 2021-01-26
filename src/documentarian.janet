@@ -50,9 +50,7 @@
   {{#modules}}
   ## {{ns}}
 
-  {{#items}}
-  {{^first}}, {{/first}}[{{name}}](#{{in-link}})
-  {{/items}}
+  {{#items}}{{^first}}, {{/first}}[{{name}}](#{{in-link}}){{/items}}
 
   {{#doc}}
   {{doc}}
@@ -132,7 +130,7 @@
                        (string/format "%q" (item :value))))
    :docstring (item :docstring)
    :link      (link item (opts :local-parent) (opts :remote-parent))
-   :in-link   (in-link (string (item :ns) "/" (item :name)))})
+   :in-link   (in-link (item :name))})
 
 
 (defn- bindings->modules
