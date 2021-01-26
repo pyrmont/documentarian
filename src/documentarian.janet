@@ -194,10 +194,14 @@
   ```
   Create a table of metadata
   ```
-  [name meta ns]
-  (let [value           (or (meta :value) (first (meta :ref)))
+  [name meta maybe-ns]
+  (let [ns              (or (meta :ns) maybe-ns)
+        value           (or (meta :value) (first (meta :ref)))
         [file line col] (source-map meta)
-        kind            (if (meta :macro) :macro (type value))
+        kind            (cond
+                          (meta :macro) :macro
+                          (meta :kind) (meta :kind)
+                          (type value))
         private?        (meta :private)
         docs            (meta :doc)
         [sig docstring] (if (and docs (string/find "\n\n" docs))
@@ -279,17 +283,58 @@
            bindings))
 
 
+(defn- require-c
+  ```
+  Extract metadata information about C functions from the source file
+  ```
+  [path]
+  (def env @{})
+  (def cfuns-grammar
+    ~{:main (some (+ :cfuns 1))
+      :cfuns (* :declaration :assignment (some :cfun) :sentinel)
+      :declaration (* "static const JanetReg" (some (if-not "=" 1)))
+      :assignment (* "=" :s* "{" :s*)
+      :cfun (* "{" :name :pointer :docstring "}," :s*)
+      :name (* :s* `"` (line) '(some (if-not `"` 1)) `"` :s* ",")
+      :pointer (* :s* (some (+ :w :d (set "_-"))) :s* ",")
+      :docstring (* :s* (% (some (* `"` (some (+ :escape '(if-not `"` 1))) `"` :s*))))
+      :escape (+ (* `\n` (constant "\n"))
+                 (* `\t` (constant "\t"))
+                 (* `\"` (constant "\"")))
+      :sentinel (* "{" :s* "NULL" :s* "," :s* "NULL" :s* "," :s* "NULL" :s* "}")})
+  (def entry-grammar
+    ~{:main (some (+ :entry 1))
+      :entry (* "janet_cfuns" :s* "(" :s* "env" :s* "," :s* :ns :s* ",")
+      :ns (+ "NULL" (* `"` '(some (+ :w :d (set "_-/"))) `"`))})
+  (def source-code (slurp path))
+  (when-let [fns (peg/match cfuns-grammar source-code)
+           ns  (first (peg/match entry-grammar source-code))]
+    (each [line-num name docstring] (partition 3 fns)
+      (put env name {:kind "cfunction"
+                     :ns ns
+                     :doc docstring
+                     :source-map [path line-num 0]}))
+    env))
+
+
 (defn extract-env
   ```
   Extract the environment for a file in the project
   ```
   [source paths]
-  (when (= ".janet" (path/ext source))
+  (defn source->path [source paths]
+    (if (string/has-prefix? (paths :project) source)
+      (string/replace (paths :project) "" source)
+      source))
+  (cond
+    (= ".c" (path/ext source))
+    (let [path (source->path source paths)
+          env  (require-c path)]
+      {path env})
+    (= ".janet" (path/ext source))
     (let [module (path/without-ext source)
           env    (require (if (= "." (paths :project)) (string "." sep module) module))
-          path   (if (string/has-prefix? (paths :project) source)
-                   (string/replace (paths :project) "" source)
-                   source)]
+          path   (source->path source paths)]
       (put env :current-file nil)
       (put env :source nil)
       {path env})))
@@ -315,7 +360,8 @@
   ```
   [data]
   (unless (and (get data :project)
-               (get data :source))
+               (or (get data :source)
+                   (get data :native)))
     (error "Project file must contain declare-project and declare-source"))
   data)
 
@@ -347,8 +393,6 @@
   Determine the project directory relative to the path to the project file
   ```
   [project-file]
-  # (-> (path/abspath project-file)
-  #     (path/dirname)))
   (let [seps (string/find-all sep project-file)]
     (if (empty? seps)
       "."
@@ -367,7 +411,9 @@
           :template template-file}]
   (def project-path (detect-dir project-file))
   (def project-data (parse-project project-file))
-  (def sources (-> (get-in project-data [:source :source])
+  (def sources (-> (or
+                     (get-in project-data [:source :source])
+                     (get-in project-data [:native :source]))
                    (gather-files project-path)))
   (def envs (reduce (fn [envs source]
                       (merge envs (extract-env source {:project project-path})))

@@ -56,6 +56,21 @@
   (is (= nil (item-val :source-map))))
 
 
+(deftest extract-env-from-c
+  (def source "fixtures/module.c")
+  (def [bindings-key bindings-val] (-> (path/join ".." source)
+                                       (doc/extract-env {:project "../" :source ""})
+                                       (pairs)
+                                       (first)))
+  (def [item-key item-val] (-> (pairs bindings-val) first))
+  (is (= source bindings-key))
+  (is (= "my-func" item-key))
+  (is (= "cfunction" (item-val :kind)))
+  (is (= "my-module" (item-val :ns)))
+  (is (= "(my-module/my-fun)\n\nThis is a function that does nothing but act as an example." (item-val :doc)))
+  (is (= [source 5 0] (item-val :source-map))))
+
+
 (deftest gather-files
   (def result (tuple ;(doc/gather-files ["test"])))
   (is (= ["test/documentarian.janet"] result)))
