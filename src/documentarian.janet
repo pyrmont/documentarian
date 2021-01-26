@@ -42,15 +42,22 @@
 (def- template
   ````
   # {{project-name}} API
-  {{#project-doc}}
 
+  {{#project-doc}}
   {{project-doc}}
+
   {{/project-doc}}
+  {{#modules}}
+  ## {{ns}}
 
   {{#items}}
   {{^first}}, {{/first}}[{{name}}](#{{in-link}})
   {{/items}}
 
+  {{#doc}}
+  {{doc}}
+
+  {{/doc}}
   {{#items}}
   ## {{name}}
 
@@ -69,6 +76,7 @@
   {{/link}}
 
   {{/items}}
+  {{/modules}}
   ````)
 
 
@@ -112,10 +120,11 @@
   ```
   Prepare the fields for the template
   ```
-  [item num opts]
+  [item num first? opts]
   {:num       num
-   :first     (one? num)
-   :name      (string (item :ns) "/" (item :name))
+   :first     first?
+   :name      (item :name)
+   :ns        (item :ns)
    :kind      (string (item :kind))
    :private?  (item :private?)
    :sig       (or (item :sig)
@@ -126,16 +135,40 @@
    :in-link   (in-link (string (item :ns) "/" (item :name)))})
 
 
+(defn- bindings->modules
+  ```
+  Split an array of bindings into an array of modules.
+  ```
+  [bindings opts]
+  (def modules @[])
+  (var curr-ns nil)
+  (var items nil)
+  (var module nil)
+  (var first? false)
+  (loop [i :range [0 (length bindings)]
+           :let [binding (get bindings i)]]
+    (if (= curr-ns (binding :ns))
+      (set first? false)
+      (do
+        (set curr-ns (binding :ns))
+        (set items @[])
+        (set module @{:ns curr-ns :items items})
+        (set first? true)
+        (array/push modules module)))
+    (if (binding :doc)
+      (put module :doc (binding :doc))
+      (array/push items (binding->item binding (inc i) first? opts))))
+  modules)
+
+
 (defn emit-markdown
   ```
   Create the Markdown-formatted strings
   ```
   [bindings project opts]
-  (let [items (seq [i :range [0 (length bindings)]]
-                (binding->item (bindings i) (+ 1 i) opts))]
-    (musty/render template {:project-name (get project :name)
-                            :project-doc  (get project :doc)
-                            :items        items})))
+  (musty/render template {:project-name (get project :name)
+                          :project-doc  (get project :doc)
+                          :modules      (bindings->modules bindings opts)}))
 
 
 (defn- source-map
@@ -147,8 +180,8 @@
       (let [ref (-?> (meta :ref) first)]
         (if (= :function (type ref))
           (let [code       (disasm ref)
-                file       (code 'source)
-                [line col] (-> (code 'sourcemap) first)]
+                file       (code :source)
+                [line col] (-> (code :sourcemap) first)]
             [file line col])
           [nil nil nil]))))
 
@@ -190,26 +223,50 @@
       (defix-path defix)))
 
 
+(defn- find-aliases
+  ```
+  Find possible aliases
+
+  Bindings that are imported into a namespace and then exported have a `meta`
+  length of 1. This can be used as a heuristic to build a table of possible
+  aliases that can be used in the `extract-bindings` function. A more robust
+  implementation would store the value of the aliased binding and use that later
+  to check.
+  ```
+  [envs defix]
+  (def aliases @{})
+  (each [path env] (pairs envs)
+    (def ns (path->ns path defix))
+    (each [name meta] (pairs env)
+      (when (one? (length meta))
+        (put aliases name ns))))
+  aliases)
+
+
 (defn extract-bindings
   ```
   Extract information about the bindings from the environments
   ```
   [envs defix]
-  (def bindings @[])
-  (def possible-aliases @{})
-  # This is a hack to handle case where module imports from another module
+  (def aliases (find-aliases envs defix))
   (defn ns-or-alias [name ns]
-    (if-let [possible-alias (get possible-aliases name)
-             alias?         (string/has-prefix? possible-alias ns)]
-      possible-alias
+    (if-let [alias (get aliases name)
+             _     (string/has-prefix? alias ns)]
+      alias
       ns))
+  (def bindings @[])
   (each [path env] (pairs envs)
     (def ns (path->ns path defix))
     (each [name meta] (pairs env)
       (when (or (not (get meta :private))
                 include-private?)
-        (if (one? (length meta)) # Bindings that are exported have a meta length of 1
-          (put possible-aliases name ns)
+        (cond
+          (= :doc name)
+          (array/push bindings {:ns ns :doc meta})
+
+          (one? (length meta)) # Only aliased bindings should have a meta length of 1
+          nil
+
           (->> (ns-or-alias name ns)
                (binding-details name meta)
                (array/push bindings))))))
