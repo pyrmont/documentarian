@@ -63,7 +63,7 @@
 
 (deftest bindings-with-private-items
   (def env {"example.janet" {'example {:private true}}})
-  (def result (tuple ;(doc/extract-bindings env "")))
+  (def result (tuple ;(doc/extract-bindings env false "")))
   (is (= [] result)))
 
 
@@ -71,7 +71,7 @@
   (var env {"example.janet" {'example {:value "Example"
                                        :doc "An example"
                                        :source-map ["example.janet" 1 1]}}})
-  (var result (tuple ;(doc/extract-bindings env "")))
+  (var result (tuple ;(doc/extract-bindings env false "")))
   (var expected [{:line 1
                   :value "Example"
                   :kind :string
@@ -81,7 +81,7 @@
                   :name 'example}])
   (is (= expected result))
   (set env {"example.janet" {'example {:private false :ref ["Example"]}}})
-  (set result (tuple ;(doc/extract-bindings env "")))
+  (set result (tuple ;(doc/extract-bindings env false "")))
   (set expected [{:line nil
                   :value "Example"
                   :kind :string

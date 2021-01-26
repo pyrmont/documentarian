@@ -4,7 +4,6 @@
 
 
 (def- sep path/sep)
-(var- include-private? false)
 (def- headings @{})
 
 
@@ -19,27 +18,31 @@
 
 (def- arg-settings
   ["A document generation tool for Janet projects."
-   "defix" {:kind :option
-            :short "d"
-            :help "Remove this prefix from binding names."
-            :default "src"}
-   "echo"  {:kind :flag
-            :short "e"
-            :help "Prints output to stdout."}
-   "input" {:kind :option
-            :short "i"
-            :help "Specify the project file."
-            :default "project.janet"}
-   "output" {:kind :option
-             :short "o"
-             :help "Specify the output file."
-             :default "api.md"}
-   "private" {:kind :flag
-              :short "p"
-              :help "Include private values."}])
+   "defix"    {:kind :option
+               :short "d"
+               :help "Remove this prefix from binding names."
+               :default "src"}
+   "echo"     {:kind :flag
+               :short "e"
+               :help "Prints output to stdout."}
+   "input"    {:kind :option
+               :short "i"
+               :help "Specify the project file."
+               :default "project.janet"}
+   "output"   {:kind :option
+               :short "o"
+               :help "Specify the output file."
+               :default "api.md"}
+   "private"  {:kind :flag
+               :short "p"
+               :help "Include private values."}
+   "template" {:kind :option
+               :short "t"
+               :help "Specify a template file."
+               :default false}])
 
 
-(def- template
+(def- default-template
   ````
   # {{project-name}} API
 
@@ -164,6 +167,9 @@
   Create the Markdown-formatted strings
   ```
   [bindings project opts]
+  (def template (if (opts :template-file)
+                  (slurp (opts :template-file))
+                  default-template))
   (musty/render template {:project-name (get project :name)
                           :project-doc  (get project :doc)
                           :modules      (bindings->modules bindings opts)}))
@@ -245,7 +251,7 @@
   ```
   Extract information about the bindings from the environments
   ```
-  [envs defix]
+  [envs include-private? defix]
   (def aliases (find-aliases envs defix))
   (defn ns-or-alias [name ns]
     (if-let [alias (get aliases name)
@@ -353,13 +359,12 @@
   ```
   Generate the document based on various inputs
   ```
-  [&keys {:echo    echo?
-          :output  output-file
-          :private private
-          :input   project-file
-          :defix   defix}]
-  (when private
-    (set include-private? true))
+  [&keys {:defix    defix
+          :echo     echo?
+          :output   output-file
+          :private  private
+          :input    project-file
+          :template template-file}]
   (def project-path (detect-dir project-file))
   (def project-data (parse-project project-file))
   (def sources (-> (get-in project-data [:source :source])
@@ -368,12 +373,13 @@
                       (merge envs (extract-env source {:project project-path})))
                     @{}
                     sources))
-  (def bindings (extract-bindings envs defix))
+  (def bindings (extract-bindings envs private defix))
   (def document (emit-markdown bindings
                                {:name (get-in project-data [:project :name])
                                 :doc  (get-in project-data [:project :doc])}
                                {:local-parent  project-path
-                                :remote-parent ""}))
+                                :remote-parent ""
+                                :template-file template-file}))
   (if echo?
     (print document)
     (spit output-file document)))
@@ -388,4 +394,5 @@
                   :output  (result "output")
                   :private (result "private")
                   :input   (result "input")
-                  :defix   (result "defix"))))
+                  :defix   (result "defix")
+                  :template(result "template"))))

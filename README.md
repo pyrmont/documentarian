@@ -1,6 +1,9 @@
 # Documentarian
 
-[![Build Status](https://github.com/pyrmont/documentarian/workflows/build/badge.svg)](https://github.com/pyrmont/documentarian/actions?query=workflow%3Abuild)
+[![Build Status][icon]][status]
+
+[icon]: https://github.com/pyrmont/documentarian/workflows/build/badge.svg
+[status]: https://github.com/pyrmont/documentarian/actions?query=workflow%3Abuild
 
 Documentarian is a minimal documentation generation tool for Janet projects.
 
@@ -55,6 +58,16 @@ $ /path/to/documentarian
 By default, your documentation is saved to a file called `api.md` in the
 current working directory.
 
+Documentarian includes a simple template that is used to produce the `api.md`
+file. You can specify your own template file using the `-t` command-line
+argument (see below). The file must be in the [Mustache templating
+language][mustache]. Documentarian processes the template using [Musty][].
+Please note that Musty is an incomplete implementation and does not support the
+more advanced features of Mustache.
+
+[mustache]: http://mustache.github.io
+[Musty]: https://github.com/pyrmont/musty
+
 ### Command-Line Arguments
 
 Documentarian supports the following command-line arguments:
@@ -67,6 +80,7 @@ Documentarian supports the following command-line arguments:
  -i, --input VALUE=project.janet             Specify the project file.
  -o, --output VALUE=api.md                   Specify the output file.
  -p, --private                               Include private values.
+ -t, --template VALUE                        Specify a template file.
 ```
 
 ## Bugs
