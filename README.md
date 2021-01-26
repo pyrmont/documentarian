@@ -16,9 +16,9 @@ can be included in your repository and read easily on services like GitHub.
 Documentarian requires Janet 1.14.1 or higher.
 
 Documentarian also depends on your project having a `project.janet` file that
-contains a `:name` key in the `declare-project` form and a `:source` key in the
-`declare-source` form. The `:source` key can be associated with individual
-Janet files or a directory containing Janet files.
+contains a `:name` key in the `declare-project` form and a `:source` key in
+either the `declare-source` or `declare-native` forms. The `:source` key can be
+associated with individual files or a directory containing Janet files.
 
 Because the API document is generated in Markdown, you can include Markdown in
 your docstrings. Don't forget that Janet supports `` ` ``-delimited
