@@ -74,7 +74,7 @@ Documentarian supports the following command-line arguments:
 
 ```
  Optional:
- -d, --defix VALUE=src                       Remove this prefix from binding names.
+ -d, --defix VALUE=src                       Remove this prefix from namespaces.
  -e, --echo                                  Prints output to stdout.
  -h, --help                                  Show this help message.
  -i, --input VALUE=project.janet             Specify the project file.

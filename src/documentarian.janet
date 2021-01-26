@@ -20,7 +20,7 @@
   ["A document generation tool for Janet projects."
    "defix"    {:kind :option
                :short "d"
-               :help "Remove this prefix from binding names."
+               :help "Remove this prefix from namespaces."
                :default "src"}
    "echo"     {:kind :flag
                :short "e"
