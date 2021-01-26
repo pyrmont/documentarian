@@ -5,7 +5,7 @@
   :license "MIT"
   :url "https://github.com/pyrmont/documentarian"
   :repo "git+https://github.com/pyrmont/documentarian"
-  :dependencies ["https://github.com/janet-lang/argparse"
+  :dependencies ["https://github.com/janet-lang/spork"
                  "https://github.com/pyrmont/musty"
                  "https://github.com/pyrmont/testament"])
 
