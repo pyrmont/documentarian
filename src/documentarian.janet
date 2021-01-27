@@ -290,9 +290,11 @@
   [path]
   (def env @{})
   (def cfuns-grammar
+    # This assumes the enumeration of C functions in a particular mannner, see
+    # https://github.com/pyrmont/markable/blob/077ec6b7618d4e775e59705b28806c865ba67238/src/markable/converter.c#L73-L109
     ~{:main (some (+ :cfuns 1))
       :cfuns (* :declaration :assignment (some :cfun) :sentinel)
-      :declaration (* "static const JanetReg" (some (if-not "=" 1)))
+      :declaration (* "static" :s+ "const" :s+ "JanetReg" (some (if-not "=" 1)))
       :assignment (* "=" :s* "{" :s*)
       :cfun (* "{" :name :pointer :docstring "}," :s*)
       :name (* :s* `"` (line) '(some (if-not `"` 1)) `"` :s* ",")
@@ -303,12 +305,15 @@
                  (* `\"` (constant "\"")))
       :sentinel (* "{" :s* "NULL" :s* "," :s* "NULL" :s* "," :s* "NULL" :s* "}")})
   (def entry-grammar
+    # This assumes the registration of C functions in a particular manner, see
+    # https://github.com/pyrmont/markable/blob/077ec6b7618d4e775e59705b28806c865ba67238/src/markable/converter.c#L116-L118
     ~{:main (some (+ :entry 1))
       :entry (* "janet_cfuns" :s* "(" :s* "env" :s* "," :s* :ns :s* ",")
       :ns (+ "NULL" (* `"` '(some (+ :w :d (set "_-/"))) `"`))})
   (def source-code (slurp path))
   (when-let [fns (peg/match cfuns-grammar source-code)
-           ns  (first (peg/match entry-grammar source-code))]
+             ns  (first (peg/match entry-grammar source-code))]
+    (assert (zero? (% (length fns) 3)) "error parsing C source code")
     (each [line-num name docstring] (partition 3 fns)
       (put env name {:kind "cfunction"
                      :ns ns
