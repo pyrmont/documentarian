@@ -12,4 +12,5 @@
 
 (declare-executable
   :name "documentarian"
-  :entry "src/documentarian.janet")
+  :entry "src/documentarian.janet"
+  :install true)
