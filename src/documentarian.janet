@@ -266,8 +266,9 @@
   (each [path env] (pairs envs)
     (def ns (path->ns path defix))
     (each [name meta] (pairs env)
-      (when (or (not (get meta :private))
-                include-private?)
+      (when (and (symbol? name)
+                 (or (not (get meta :private))
+                     include-private?))
         (cond
           (= :doc name)
           (array/push bindings {:ns ns :doc meta})
