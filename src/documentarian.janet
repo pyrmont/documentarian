@@ -251,7 +251,7 @@
   aliases)
 
 (defn document-name?
-  `
+  ```
   Given some binding in an environment, determine whether it's eligible for
   rendering as documentation.
 
