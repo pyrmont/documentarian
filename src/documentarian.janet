@@ -250,6 +250,19 @@
         (put aliases name ns))))
   aliases)
 
+(defn document-name?
+  ```
+  Given some binding in an environment, determine whether it's eligible for
+  rendering as documentation.
+
+  Eligible bindings are:
+  - any bound symbol
+  - `:doc`
+  ```
+  [name]
+  (case name
+    :doc true
+    (symbol? name)))
 
 (defn extract-bindings
   ```
@@ -266,7 +279,7 @@
   (each [path env] (pairs envs)
     (def ns (path->ns path defix))
     (each [name meta] (pairs env)
-      (when (and (symbol? name)
+      (when (and (document-name? name)
                  (or (not (get meta :private))
                      include-private?))
         (cond
