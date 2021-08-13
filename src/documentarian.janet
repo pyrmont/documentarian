@@ -258,7 +258,7 @@
   Eligible bindings are:
   - any bound symbol
   - `:doc`
-  `
+  ```
   [name]
   (case name
     :doc true
