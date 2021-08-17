@@ -133,5 +133,27 @@
      {:name 'example2 :ns "example" :kind :function :docstring "This is an example." :file "example.janet" :line 3}])
   (is (= expected (doc/emit-markdown bindings {:name "Example"} {}))))
 
+(deftest project-function-regression-gh-6
+  (def sample-docstring
+    ````
+    A sample docstring with "quotes".
+
+    ```
+    A fenced code block with "quotes".
+    ```
+    ````)
+  (def bindings
+    [{:name 'example :ns "example" :kind :function :docstring sample-docstring}
+     {:name :doc :ns "example" :kind :string :doc sample-docstring}])
+
+  (let [lines (->> (doc/emit-markdown bindings {:name "Example" :doc sample-docstring} {})
+                   (string/split "\n"))
+        [project-docstring mod-docstring fn-docstring] (filter (partial string/find "sample") lines)
+        [project-code-block mod-code-block fn-code-block] (filter (partial string/find "fenced") lines)]
+
+    (each md [project-docstring mod-docstring fn-docstring]
+      (is (== "A sample docstring with \"quotes\"." md)))
+    (each md [project-code-block mod-code-block fn-code-block]
+      (is (== "A fenced code block with \"quotes\"." md)))))
 
 (run-tests!)

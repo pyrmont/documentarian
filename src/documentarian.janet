@@ -47,7 +47,7 @@
   # {{project-name}} API
 
   {{#project-doc}}
-  {{project-doc}}
+  {{&project-doc}}
 
   {{/project-doc}}
   {{#modules}}
@@ -56,7 +56,7 @@
   {{#items}}{{^first}}, {{/first}}[{{name}}](#{{in-link}}){{/items}}
 
   {{#doc}}
-  {{doc}}
+  {{&doc}}
 
   {{/doc}}
   {{#items}}
