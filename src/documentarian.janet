@@ -430,7 +430,7 @@
 (defn main
   [& argv]
   (def args (argy/parse-args config))
-  (unless (args :help?)
+  (unless (or (args :help?) (args :error?))
     (def opts @{:defix (get (args :opts) "defix" "")
                 :echo? (get (args :opts) "echo" false)
                 :include-private? (get (args :opts) "private" false)
@@ -438,4 +438,8 @@
                 :project-file (get (args :opts) "input" "project.janet")
                 :link-parent ""
                 :template-file (get (args :opts) "template")})
-    (generate-doc opts)))
+    (try
+      (generate-doc opts)
+      ([err]
+       (eprint "documentarian: " err)
+       (os/exit 1)))))
