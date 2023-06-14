@@ -61,6 +61,7 @@ Documentarian supports the following command-line arguments:
  -l, --link-parent <url>    Replace project root with <url> in source code links.
  -o, --output <path>        Use <path> as output file.
  -p, --private              Include private values in output.
+ -s, --syspath <path>       Set Janet's syspath to <path>.
  -t, --template <path>      Use template at <path> for output.
  -h, --help                 Show this help message.
 ```

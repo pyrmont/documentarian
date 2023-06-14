@@ -32,6 +32,10 @@
            "--private"     {:kind  :flag
                             :short "p"
                             :help  "Include private values in output."}
+           "--syspath"     {:kind  :single
+                            :short "s"
+                            :proxy "path"
+                            :help  "Set Janet's syspath to <path>."}
            "--template"    {:kind  :single
                             :short "t"
                             :proxy "path"
@@ -416,6 +420,9 @@
   (def project-data (parse-project project-file))
   (put opts :project-root project-root)
 
+  (unless (nil? (opts :syspath))
+    (put root-env :syspath (opts :syspath)))
+
   (defn check-build-dir [name]
     (def path (string project-root "build" sep name ".so"))
     (when (= :file (os/stat path :mode))
@@ -452,6 +459,7 @@
                 :link-parent ""
                 :output-file (get (args :opts) "output" "api.md")
                 :project-file (get (args :opts) "input" "project.janet")
+                :syspath (get (args :opts) "syspath")
                 :template-file (get (args :opts) "template")})
     (try
       (generate-doc opts)
