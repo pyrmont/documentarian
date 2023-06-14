@@ -13,14 +13,12 @@ can be included in your repository and read easily on services like GitHub.
 
 ## Requirements
 
-Documentarian requires Janet 1.14.1 or higher.
-
-Documentarian also depends on your project having a `project.janet` file that
+Documentarian depends on your project having a `project.janet` file that
 contains a `:name` key in the `declare-project` form and a `:source` key in
 either the `declare-source` or `declare-native` forms. The `:source` key can be
 associated with individual files or a directory containing Janet files.
 
-Because the API document is generated in Markdown, you can include Markdown in
+Since the API document is generated in Markdown, you can include Markdown in
 your docstrings. Don't forget that Janet supports `` ` ``-delimited
 [long strings][ls] in addition to regular `"`-delimited strings. Long strings
 preserve whitespace (including newlines) which can be used to create lists,
@@ -28,28 +26,15 @@ headings and code blocks.
 
 [ls]: https://janet-lang.org/docs/strings.html
 
-## Building
+### Installing
 
-Clone the repository and then run:
-
-```console
-$ jpm build
-```
-
-The `documentarian` binary is in the `build` directory.
-
-## Installing
-
-After building, run:
+To install run:
 
 ```console
-$ jpm install
+$ jpm install https://github.com/pyrmont/documentarian
 ```
 
 ## Usage
-
-If you have your code in a directory `src` at the top-level of your project
-directory, you can run Documentarian from your project directory like so:
 
 ```console
 $ /path/to/documentarian
@@ -73,14 +58,36 @@ more advanced features of Mustache.
 Documentarian supports the following command-line arguments:
 
 ```
- Optional:
- -d, --defix VALUE=src                       Remove this prefix from namespaces.
- -e, --echo                                  Prints output to stdout.
- -h, --help                                  Show this help message.
- -i, --input VALUE=project.janet             Specify the project file.
- -o, --output VALUE=api.md                   Specify the output file.
- -p, --private                               Include private values.
- -t, --template VALUE                        Specify a template file.
+ -d, --defix <prefix>       Remove prefix from all namespaces.
+ -e, --echo                 Output to stdout rather than output file.
+ -i, --input <path>         Use <path> as project file.
+ -o, --output <path>        Use <path> as output file.
+ -p, --private              Include private values in output.
+ -l, --link-parent <url>    Replace project root with <url> in source code links.
+ -t, --template <path>      Use template at <path> for output.
+ -h, --help                 Show this help message.
+```
+
+## Development
+
+### Preparing
+
+Clone the repository and then run:
+
+```console
+$ jpm [-l] run dev-deps
+```
+
+### Building
+
+```console
+$ jpm [-l] build
+```
+
+### Testing
+
+```console
+$ jpm [-l] test
 ```
 
 ## Bugs
