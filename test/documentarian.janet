@@ -1,4 +1,3 @@
-(import spork/path)
 (import testament :prefix "" :exit true)
 (import ../src/documentarian :as doc)
 
@@ -8,58 +7,46 @@
 
 
 (deftest parse-project-with-file
-  (def result (doc/parse-project "fixtures/project.janet"))
-  (is (= "Example" (get-in result [:project :name])))
-  (is (= "https://github.com/pyrmont/example" (get-in result [:project :url])))
-  (is (= "This is an example of project-level\ndocumentation." (get-in result [:project :doc])))
-  (is (= ["src/example.janet"] (get-in result [:source :source]))))
+  (def actual (doc/parse-project "fixtures/project.janet"))
+  (def expect {:project {:name "Example"
+                         :url "https://github.com/pyrmont/example"
+                         :doc "This is an example of project-level\ndocumentation."}
+               :source  {:source ["src/example.janet"]}})
+  (is (== expect actual)))
 
 
 (deftest extract-env-from-defs
   (def source "fixtures/defn.janet")
-  (def [bindings-key bindings-val] (-> (path/join ".." source)
-                                       (doc/extract-env {:project "../" :source ""})
-                                       (pairs)
-                                       (first)))
-  (def [item-key item-val] (-> (pairs bindings-val) first))
-  (is (= source bindings-key))
-  (is (= 'example item-key))
-  (is (= "(example)\n\nThis is an example function" (item-val :doc)))
-  (is (= [source 1 1] (item-val :source-map))))
+  (def env (doc/extract-env source {:project "../" :source ""}))
+  (def actual (get-in env [source 'example]))
+  (def expect {:doc "(example)\n\nThis is an example function" :source-map [source 1 1]})
+  (is (== (expect :doc) (actual :doc)))
+  (is (== (expect :source-map) (actual :source-map)))
+  (is (== :function (type (actual :value)))))
 
 
-(deftest extract-env-from-declared-vars-v1
+(deftest extract-env-from-declared-vars-1
   (def source "fixtures/varfn.janet")
-  (def [bindings-key bindings-val] (-> (path/join ".." source)
-                                       (doc/extract-env {:project "../" :source ""})
-                                       (pairs)
-                                       (first)))
-  (def fn-name 'example)
-  (def [item-key item-val] (->> (pairs bindings-val) (find |(= fn-name (first $)))))
-  (is (= source bindings-key))
-  (is (= fn-name item-key))
-  (is (= "(example)\n\nThis is an example function" (item-val :doc)))
-  (is (= [source 1 1] (item-val :source-map))))
+  (def env (doc/extract-env source {:project "../" :source ""}))
+  (def actual (get-in env [source 'example]))
+  (def expect {:doc "(example)\n\nThis is an example function" :source-map [source 1 1]})
+  (is (== (expect :doc) (actual :doc)))
+  (is (== (expect :source-map) (actual :source-map)))
+  (is (== :function (type (get-in actual [:ref 0])))))
 
 
-(deftest extract-env-from-declared-vars-v2
+(deftest extract-env-from-declared-vars-2
   (def source "fixtures/varfn.janet")
-  (def [bindings-key bindings-val] (-> (path/join ".." source)
-                                       (doc/extract-env {:project "../" :source ""})
-                                       (pairs)
-                                       (first)))
-  (def fn-name 'example2)
-  (def [item-key item-val] (->> (pairs bindings-val) (find |(= fn-name (first $)))))
-  (is (= source bindings-key))
-  (is (= fn-name item-key))
-  (is (= "(example2)\n\nThis is an example function" (item-val :doc)))
-  (is (= nil (item-val :source-map))))
+  (def env (doc/extract-env source {:project "../" :source ""}))
+  (def actual (get-in env [source 'example2]))
+  (def expect {:doc "(example2)\n\nThis is an example function"})
+  (is (== (expect :doc) (actual :doc)))
+  (is (== :function (type (get-in actual [:ref 0])))))
 
 
 (deftest extract-env-from-c
   (def source "fixtures/module.c")
-  (def [bindings-key bindings-val] (-> (path/join ".." source)
-                                       (doc/extract-env {:project "../" :source ""})
+  (def [bindings-key bindings-val] (-> (doc/extract-env source {:project "../" :source ""})
                                        (pairs)
                                        (first)))
   (def [item-key item-val] (-> (pairs bindings-val) first))
@@ -73,43 +60,44 @@
 
 (deftest gather-files
   (def result (tuple ;(doc/gather-files ["test"])))
-  (is (= ["test/documentarian.janet"] result)))
+  (is (== ["./test/documentarian.janet"] result)))
 
 
 (deftest bindings-with-private-items
   (def env {"example.janet" {'example {:private true}}})
-  (def result (tuple ;(doc/extract-bindings env false "")))
-  (is (= [] result)))
+  (def actual (doc/extract-bindings env false ""))
+  (def expect [])
+  (is (== expect actual)))
 
 
 (deftest bindings-with-items
-  (var env {"example.janet" {'example {:value "Example"
+  (def env1 {"example.janet" {'example {:value "Example"
                                        :doc "An example"
                                        :source-map ["example.janet" 1 1]}}})
-  (var result (tuple ;(doc/extract-bindings env false "")))
-  (var expected [{:line 1
-                  :value "Example"
-                  :kind :string
-                  :docstring "An example"
-                  :file "example.janet"
-                  :ns "example"
-                  :name 'example}])
-  (is (= expected result))
-  (set env {"example.janet" {'example {:private false :ref ["Example"]}}})
-  (set result (tuple ;(doc/extract-bindings env false "")))
-  (set expected [{:line nil
-                  :value "Example"
-                  :kind :string
-                  :private? false
-                  :docstring nil
-                  :file nil
-                  :ns "example"
-                  :name 'example}])
-  (is (= expected result)))
+  (def actual1 (doc/extract-bindings env1 false ""))
+  (def expect1 [{:line 1
+                 :value "Example"
+                 :kind :string
+                 :docstring "An example"
+                 :file "example.janet"
+                 :ns "example"
+                 :name 'example}])
+  (is (== expect1 actual1))
+  (def env2 {"example.janet" {'example {:private false :ref ["Example"]}}})
+  (def actual2 (doc/extract-bindings env2 false ""))
+  (def expect2 [{:line nil
+                 :value "Example"
+                 :kind :string
+                 :private? false
+                 :docstring nil
+                 :file nil
+                 :ns "example"
+                 :name 'example}])
+  (is (== expect2 actual2)))
 
 
 (deftest markdown-output
-  (def expected
+  (def expect
     (string "# Example API\n\n"
             "## example\n\n"
             "[example](#example), "
@@ -131,9 +119,11 @@
     [{:name 'example :ns "example" :kind :function :docstring "This is an example." :file "example.janet" :line 1}
      {:name 'example* :ns "example" :kind :function :docstring "This is an example." :file "example.janet" :line 2}
      {:name 'example2 :ns "example" :kind :function :docstring "This is an example." :file "example.janet" :line 3}])
-  (is (= expected (doc/emit-markdown bindings {:name "Example"} {}))))
+  (def actual (doc/emit-markdown bindings {:name "Example"} {}))
+  (is (= expect actual)))
 
-(deftest project-function-regression-gh-6
+
+(deftest quotes-in-codeblocks
   (def sample-docstring
     ````
     A sample docstring with "quotes".
@@ -155,5 +145,6 @@
       (is (== "A sample docstring with \"quotes\"." md)))
     (each md [project-code-block mod-code-block fn-code-block]
       (is (== "A fenced code block with \"quotes\"." md)))))
+
 
 (run-tests!)

@@ -5,12 +5,19 @@
   :license "MIT"
   :url "https://github.com/pyrmont/documentarian"
   :repo "git+https://github.com/pyrmont/documentarian"
-  :dependencies ["https://github.com/janet-lang/spork"
-                 "https://github.com/pyrmont/musty"
-                 "https://github.com/pyrmont/testament"])
-
+  :dependencies ["https://github.com/pyrmont/argy-bargy"
+                 "https://github.com/pyrmont/musty"]
+  :dev-dependencies ["https://github.com/pyrmont/testament"])
 
 (declare-executable
   :name "documentarian"
   :entry "src/documentarian.janet"
   :install true)
+
+(task "dev-deps" []
+  (if-let [deps ((dyn :project) :dev-dependencies)]
+    (each dep deps
+      (bundle-install dep))
+    (do
+      (print "no dependencies found")
+      (flush))))

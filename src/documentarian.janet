@@ -1,45 +1,31 @@
+(import argy-bargy :as argy)
 (import musty)
-(import spork/argparse)
-(import spork/path)
 
 
-(def- sep path/sep)
+(def- sep (if (= :windows (os/which)) "\\" "/"))
 (def- headings @{})
 
 
-(defn- path/without-ext [path]
-  (def txe (string/reverse (path/ext path)))
-  (if (nil? txe)
-    path
-    (->> (string/reverse path)
-       (string/replace txe "")
-       (string/reverse))))
-
-
-(def- arg-settings
-  ["A document generation tool for Janet projects."
-   "defix"    {:kind :option
-               :short "d"
-               :help "Remove this prefix from namespaces."
-               :default "src"}
-   "echo"     {:kind :flag
-               :short "e"
-               :help "Prints output to stdout."}
-   "input"    {:kind :option
-               :short "i"
-               :help "Specify the project file."
-               :default "project.janet"}
-   "output"   {:kind :option
-               :short "o"
-               :help "Specify the output file."
-               :default "api.md"}
-   "private"  {:kind :flag
-               :short "p"
-               :help "Include private values."}
-   "template" {:kind :option
-               :short "t"
-               :help "Specify a template file."
-               :default false}])
+(def- config
+  {:rules ["--defix" {:kind :single
+                      :short "d"
+                      :help "Remove a directory name from function names."}
+           "--echo"  {:kind :flag
+                      :short "e"
+                      :help "Prints output to stdout."}
+           "--input" {:kind :single
+                      :short "i"
+                      :help "Specify the project file."}
+           "--output" {:kind :single
+                       :short "o"
+                       :help "Specify the output file."}
+           "--private" {:kind :flag
+                        :short "p"
+                        :help "Include private values."}
+           "--template" {:kind :single
+                         :short "t"
+                         :help "Specify a template file."}]
+   :info {:about "A document generation tool for Janet projects."}})
 
 
 (def- default-template
@@ -79,6 +65,11 @@
   {{/items}}
   {{/modules}}
   ````)
+
+
+(defn- file-ext [path]
+  (def last-dot (last (string/find-all "." path)))
+  (string/slice path last-dot))
 
 
 (defn- link
@@ -223,12 +214,8 @@
   Convert a path to a 'namespace'
   ```
   [path defix]
-  (defn defix-path [p defix]
-    (if (empty? defix)
-      p
-      (string/replace (string defix sep) "" p)))
-  (-> (path/without-ext path)
-      (defix-path defix)))
+  (def ext (file-ext path))
+  (string/slice path (length defix) (if (nil? ext) nil (inc (length ext)))))
 
 
 (defn- find-aliases
@@ -250,6 +237,7 @@
         (put aliases name ns))))
   aliases)
 
+
 (defn document-name?
   ```
   Given some binding in an environment, determine whether it's eligible for
@@ -263,6 +251,7 @@
   (case name
     :doc true
     (symbol? name)))
+
 
 (defn extract-bindings
   ```
@@ -346,13 +335,13 @@
       (string/replace (paths :project) "" source)
       source))
   (cond
-    (= ".c" (path/ext source))
+    (= ".c" (file-ext source))
     (let [path (source->path source paths)
           env  (require-c path)]
       {path env})
-    (= ".janet" (path/ext source))
-    (let [module (path/without-ext source)
-          env    (require (if (= "." (paths :project)) (string "." sep module) module))
+
+    (= ".janet" (file-ext source))
+    (let [env    (dofile (if (= "." (paths :project)) (string "." sep source) source))
           path   (source->path source paths)]
       (put env :current-file nil)
       (put env :source nil)
@@ -366,7 +355,7 @@
   [paths &opt parent]
   (default parent ".")
   (mapcat (fn [path]
-            (let [full-path (path/join parent path)]
+            (let [full-path (string parent sep path)]
               (case (os/stat full-path :mode)
                 :file      full-path
                 :directory (gather-files (os/dir full-path) full-path))))
@@ -420,44 +409,42 @@
 
 (defn- generate-doc
   ```
-  Generate the document based on various inputs
+  Generate an API document for a project
   ```
-  [&keys {:defix    defix
-          :echo     echo?
-          :output   output-file
-          :private  private
-          :input    project-file
-          :template template-file}]
+  [opts]
+  (def project-file (opts :project-file))
   (def project-path (detect-dir project-file))
   (def project-data (parse-project project-file))
-  (def sources (-> (or
-                     (get-in project-data [:source :source])
-                     (get-in project-data [:native :source]))
+  (put opts :local-parent project-path)
+
+  (def sources (-> (or (get-in project-data [:source :source])
+                       (get-in project-data [:native :source]))
                    (gather-files project-path)))
+  (put opts :include-ns? (not= 1 (length sources)))
+
   (def envs (reduce (fn [envs source]
                       (merge envs (extract-env source {:project project-path})))
                     @{}
                     sources))
-  (def bindings (extract-bindings envs private defix))
+  (def bindings (extract-bindings envs (opts :include-private?) (opts :defix)))
   (def document (emit-markdown bindings
                                {:name (get-in project-data [:project :name])
                                 :doc  (get-in project-data [:project :doc])}
-                               {:local-parent  project-path
-                                :remote-parent ""
-                                :template-file template-file}))
-  (if echo?
+                               opts))
+  (if (opts :echo?)
     (print document)
-    (spit output-file document)))
+    (spit (opts :output-file) document)))
 
 
 (defn main
-  [& args]
-  (let [result (argparse/argparse ;arg-settings)]
-    (unless result
-      (os/exit 1))
-    (generate-doc :echo    (result "echo")
-                  :output  (result "output")
-                  :private (result "private")
-                  :input   (result "input")
-                  :defix   (result "defix")
-                  :template(result "template"))))
+  [& argv]
+  (def args (argy/parse-args config))
+  (unless (args :help?)
+    (def opts @{:defix (get (args :opts) "defix" "")
+                :echo? (get (args :opts) "echo" false)
+                :include-private? (get (args :opts) "private" false)
+                :output-file (get (args :opts) "output" "api.md")
+                :project-file (get (args :opts) "input" "project.janet")
+                :remote-parent ""
+                :template-file (get (args :opts) "template")})
+    (generate-doc opts)))
