@@ -260,7 +260,7 @@
   [path project-root defix]
   (string/slice path
                 (+ (length project-root) (length defix))
-                (last-pos ".janet" path)))
+                (when (string/has-suffix? ".janet" path) -7)))
 
 
 (defn- find-aliases
@@ -339,17 +339,15 @@
   ```
   Extract the environment for a file in the project
   ```
-  [source]
+  [path]
   (def result @{})
-  (defn source->path [source paths]
-    (if (string/has-prefix? (paths :project) source)
-      (string/replace (paths :project) "" source)
-      source))
-  (when (= ".janet" (file-ext source))
-    (def env (dofile source))
+  (def env (if (nil? (file-ext path))
+             (require path)
+             (dofile path)))
+  (unless (nil? env)
     (put env :current-file nil)
     (put env :source nil)
-    (put result source env))
+    (put result path env))
   result)
 
 
@@ -418,16 +416,21 @@
   (def project-data (parse-project project-file))
   (put opts :project-root project-root)
 
-  (def exclusions (map (fn [x] (string project-root x)) (opts :exclude)))
-  (def sources (-> (or (get-in project-data [:source :source])
-                       (get-in project-data [:native :source]))
-                   (gather-files project-root exclusions)))
-  (put opts :include-ns? (not= 1 (length sources)))
+  (defn check-build-dir [name]
+    (def path (string project-root "build" sep name ".so"))
+    (when (= :file (os/stat path :mode))
+      path))
+  (array/push module/paths [check-build-dir :native])
 
-  (def envs (reduce (fn [envs source]
-                      (merge envs (extract-env source)))
-                    @{}
-                    sources))
+  (def envs @{})
+  (when-let [sources (get-in project-data [:source :source])]
+    (def exclusions (map (fn [x] (string project-root x)) (opts :exclude)))
+    (def paths (gather-files sources project-root exclusions))
+    (reduce (fn [e p] (merge e (extract-env p))) envs paths))
+
+  (when-let [name (get-in project-data [:native :name])]
+    (put envs (string project-root name) ((extract-env name) name)))
+
   (def bindings (extract-bindings envs opts))
   (def document (emit-markdown bindings
                                {:name (get-in project-data [:project :name])
