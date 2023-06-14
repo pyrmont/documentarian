@@ -45,8 +45,15 @@
 
 
 (deftest gather-files
-  (def result(doc/gather-files ["test"]))
-  (is (== ["./test/documentarian.janet"] result)))
+  (def actual (doc/gather-files ["test"]))
+  (def expect ["./test/documentarian.janet"])
+  (is (== actual expect)))
+
+
+(deftest gather-files-with-exclusions
+  (def actual (doc/gather-files ["fixtures"] "./" ["./fixtures"]))
+  (def expect [])
+  (is (== actual expect)))
 
 
 (deftest bindings-with-private-items

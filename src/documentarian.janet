@@ -13,6 +13,10 @@
            "--echo"        {:kind  :flag
                             :short "e"
                             :help  "Output to stdout rather than output file."}
+           "--exclude"     {:kind  :multi
+                            :short "x"
+                            :proxy "path"
+                            :help  "Exclude bindings in <path> from the output."}
            "--input"       {:kind  :single
                             :short "i"
                             :proxy "path"
@@ -109,6 +113,7 @@
   ```
   [path]
   (if (or (string/has-prefix? (string "." sep) path)
+          (string/has-prefix? (string ".." sep) path)
           (string/has-prefix? sep path))
     (string/slice path 0 (inc (last-pos sep path)))
     (string "." sep)))
@@ -352,16 +357,21 @@
   ```
   Replace mixture of files and directories with files
   ```
-  [paths &opt parent]
+  [paths &opt parent exclusions]
   (default parent (string "." sep))
+  (default exclusions [])
   (mapcat (fn [path]
             (def full-path (string parent path))
-            (case (os/stat full-path :mode)
-              :file
+            (def kind (os/stat full-path :mode))
+            (cond
+              (find (fn [x] (string/has-prefix? x full-path)) exclusions)
+              []
+
+              (= :file kind)
               full-path
 
-              :directory
-              (gather-files (os/dir full-path) (string full-path sep))))
+              (= :directory kind)
+              (gather-files (os/dir full-path) (string full-path sep) exclusions)))
           paths))
 
 
@@ -408,9 +418,10 @@
   (def project-data (parse-project project-file))
   (put opts :project-root project-root)
 
+  (def exclusions (map (fn [x] (string project-root x)) (opts :exclude)))
   (def sources (-> (or (get-in project-data [:source :source])
                        (get-in project-data [:native :source]))
-                   (gather-files project-root)))
+                   (gather-files project-root exclusions)))
   (put opts :include-ns? (not= 1 (length sources)))
 
   (def envs (reduce (fn [envs source]
@@ -433,10 +444,11 @@
   (unless (or (args :help?) (args :error?))
     (def opts @{:defix (get (args :opts) "defix" "")
                 :echo? (get (args :opts) "echo" false)
+                :exclude (get (args :opts) "exclude" [])
                 :include-private? (get (args :opts) "private" false)
+                :link-parent ""
                 :output-file (get (args :opts) "output" "api.md")
                 :project-file (get (args :opts) "input" "project.janet")
-                :link-parent ""
                 :template-file (get (args :opts) "template")})
     (try
       (generate-doc opts)
