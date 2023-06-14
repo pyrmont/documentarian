@@ -11,7 +11,19 @@ Documentarian makes it easy to take the docstrings you've already written for
 your code and turn them into a simple Markdown-formatted document. This document
 can be included in your repository and read easily on services like GitHub.
 
-## Requirements
+## Installing
+
+To install, run:
+
+```console
+$ jpm install https://github.com/pyrmont/documentarian
+```
+
+## Usage
+
+```console
+$ /path/to/documentarian
+```
 
 Documentarian depends on your project having a `project.janet` file that
 contains a `:name` key in the `declare-project` form and a `:source` key in
@@ -25,20 +37,6 @@ preserve whitespace (including newlines) which can be used to create lists,
 headings and code blocks.
 
 [ls]: https://janet-lang.org/docs/strings.html
-
-### Installing
-
-To install run:
-
-```console
-$ jpm install https://github.com/pyrmont/documentarian
-```
-
-## Usage
-
-```console
-$ /path/to/documentarian
-```
 
 By default, your documentation is saved to a file called `api.md` in the
 current working directory.
