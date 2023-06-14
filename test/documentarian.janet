@@ -51,7 +51,8 @@
 
 (deftest bindings-with-private-items
   (def env {"example.janet" {'example {:private true}}})
-  (def actual (doc/extract-bindings env false ""))
+  (def opts {:include-private? false :defix ""})
+  (def actual (doc/extract-bindings env opts))
   (def expect [])
   (is (== expect actual)))
 
@@ -60,7 +61,8 @@
   (def env1 {"example.janet" {'example {:value "Example"
                                        :doc "An example"
                                        :source-map ["example.janet" 1 1]}}})
-  (def actual1 (doc/extract-bindings env1 false ""))
+  (def opts1 {:include-private? false :defix ""})
+  (def actual1 (doc/extract-bindings env1 opts1))
   (def expect1 [{:line 1
                  :value "Example"
                  :kind :string
@@ -70,7 +72,8 @@
                  :name 'example}])
   (is (== expect1 actual1))
   (def env2 {"example.janet" {'example {:private false :ref ["Example"]}}})
-  (def actual2 (doc/extract-bindings env2 false ""))
+  (def opts2 {:include-private? false :defix ""})
+  (def actual2 (doc/extract-bindings env2 opts2))
   (def expect2 [{:line nil
                  :value "Example"
                  :kind :string
@@ -106,7 +109,7 @@
      {:name 'example* :ns "example" :kind :function :docstring "This is an example." :file "example.janet" :line 2}
      {:name 'example2 :ns "example" :kind :function :docstring "This is an example." :file "example.janet" :line 3}])
   (def actual (doc/emit-markdown bindings {:name "Example"} {}))
-  (is (= expect actual)))
+  (is (== expect actual)))
 
 
 (deftest quotes-in-codeblocks

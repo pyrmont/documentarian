@@ -3,7 +3,6 @@
 
 
 (def- sep (if (= :windows (os/which)) "\\" "/"))
-(def- headings @{})
 
 
 (def- config
@@ -88,6 +87,7 @@
       (string file "#L" line))))
 
 
+(def- headings @{})
 (defn- in-link
   ```
   Create an internal link
@@ -161,8 +161,8 @@
   (def template (if (opts :template-file)
                   (slurp (opts :template-file))
                   default-template))
-  (musty/render template {:project-name (get project :name)
-                          :project-doc  (get project :doc)
+  (musty/render template {:project-name (project :name)
+                          :project-doc  (project :doc)
                           :modules      (bindings->modules bindings opts)}))
 
 
@@ -257,10 +257,12 @@
   ```
   Extract information about the bindings from the environments
   ```
-  [envs include-private? defix]
+  [envs opts]
+  (def defix (opts :defix))
+  (def include-private? (opts :include-private?))
   (def aliases (find-aliases envs defix))
   (defn ns-or-alias [name ns]
-    (if-let [alias (get aliases name)
+    (if-let [alias (aliases name)
              _     (string/has-prefix? alias ns)]
       alias
       ns))
@@ -269,7 +271,7 @@
     (def ns (path->ns path defix))
     (each [name meta] (pairs env)
       (when (and (document-name? name)
-                 (or (not (get meta :private))
+                 (or (not (meta :private))
                      include-private?))
         (cond
           (= :doc name)
@@ -324,9 +326,9 @@
   Check that the data in the project.janet file includes everything we need
   ```
   [data]
-  (unless (and (get data :project)
-               (or (get data :source)
-                   (get data :native)))
+  (unless (and (data :project)
+               (or (data :source)
+                   (data :native)))
     (error "Project file must contain declare-project and declare-source"))
   data)
 
@@ -339,18 +341,17 @@
   the sections but without the leading `declare-` and inserted as keywords.
   ```
   [project-file]
-  (let [contents (slurp project-file)
-        p        (parser/new)
-        result    @{}]
-    (parser/consume p contents)
-    (while (parser/has-more p)
-      (let [form (parser/produce p)
-            head (first form)
-            tail (tuple/slice form 1)]
-        (when (string/has-prefix? "declare-" head)
-          (let [key (-> (string/replace "declare-" "" head) keyword)]
-            (put result key (struct ;tail))))))
-    (validate-project-data result)))
+  (def result @{})
+  (def p (parser/new))
+  (parser/consume p (slurp project-file))
+  (while (parser/has-more p)
+    (def form (parser/produce p))
+    (def head (first form))
+    (def tail (tuple/slice form 1))
+    (when (string/has-prefix? "declare-" head)
+      (def key (keyword (string/slice head 8))) # slice off 'declare-'
+      (put result key (struct ;tail))))
+  (validate-project-data result))
 
 
 (defn- detect-dir
@@ -358,10 +359,10 @@
   Determine the project directory relative to the path to the project file
   ```
   [project-file]
-  (let [seps (string/find-all sep project-file)]
-    (if (empty? seps)
-      "."
-      (string/slice project-file 0 (+ 1 (array/peek seps))))))
+  (def seps (string/find-all sep project-file))
+  (if (empty? seps)
+    "."
+    (string/slice project-file 0 (inc (array/peek seps)))))
 
 
 (defn- generate-doc
@@ -383,7 +384,7 @@
                       (merge envs (extract-env source {:project project-path})))
                     @{}
                     sources))
-  (def bindings (extract-bindings envs (opts :include-private?) (opts :defix)))
+  (def bindings (extract-bindings envs opts))
   (def document (emit-markdown bindings
                                {:name (get-in project-data [:project :name])
                                 :doc  (get-in project-data [:project :doc])}
