@@ -17,7 +17,7 @@
 
 (deftest extract-env-from-defs
   (def source "fixtures/defn.janet")
-  (def env (doc/extract-env source {:project "../" :source ""}))
+  (def env (doc/extract-env source))
   (def actual (get-in env [source 'example]))
   (def expect {:doc "(example)\n\nThis is an example function" :source-map [source 1 1]})
   (is (== (expect :doc) (actual :doc)))
@@ -27,7 +27,7 @@
 
 (deftest extract-env-from-declared-vars-1
   (def source "fixtures/varfn.janet")
-  (def env (doc/extract-env source {:project "../" :source ""}))
+  (def env (doc/extract-env source))
   (def actual (get-in env [source 'example]))
   (def expect {:doc "(example)\n\nThis is an example function" :source-map [source 1 1]})
   (is (== (expect :doc) (actual :doc)))
@@ -37,7 +37,7 @@
 
 (deftest extract-env-from-declared-vars-2
   (def source "fixtures/varfn.janet")
-  (def env (doc/extract-env source {:project "../" :source ""}))
+  (def env (doc/extract-env source))
   (def actual (get-in env [source 'example2]))
   (def expect {:doc "(example2)\n\nThis is an example function"})
   (is (== (expect :doc) (actual :doc)))
@@ -45,23 +45,23 @@
 
 
 (deftest gather-files
-  (def result (tuple ;(doc/gather-files ["test"])))
+  (def result(doc/gather-files ["test"]))
   (is (== ["./test/documentarian.janet"] result)))
 
 
 (deftest bindings-with-private-items
-  (def env {"example.janet" {'example {:private true}}})
-  (def opts {:include-private? false :defix ""})
+  (def env {"./example.janet" {'example {:private true}}})
+  (def opts {:include-private? false :defix "" :project-root "./"})
   (def actual (doc/extract-bindings env opts))
   (def expect [])
   (is (== expect actual)))
 
 
 (deftest bindings-with-items
-  (def env1 {"example.janet" {'example {:value "Example"
-                                       :doc "An example"
-                                       :source-map ["example.janet" 1 1]}}})
-  (def opts1 {:include-private? false :defix ""})
+  (def env1 {"./example.janet" {'example {:value "Example"
+                                        :doc "An example"
+                                        :source-map ["example.janet" 1 1]}}})
+  (def opts1 {:defix ""  :include-private? false :project-root "./"})
   (def actual1 (doc/extract-bindings env1 opts1))
   (def expect1 [{:line 1
                  :value "Example"
@@ -71,8 +71,8 @@
                  :ns "example"
                  :name 'example}])
   (is (== expect1 actual1))
-  (def env2 {"example.janet" {'example {:private false :ref ["Example"]}}})
-  (def opts2 {:include-private? false :defix ""})
+  (def env2 {"./example.janet" {'example {:private false :ref ["Example"]}}})
+  (def opts2 {:defix "" :include-private? false :project-root "./"})
   (def actual2 (doc/extract-bindings env2 opts2))
   (def expect2 [{:line nil
                  :value "Example"

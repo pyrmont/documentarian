@@ -6,24 +6,32 @@
 
 
 (def- config
-  {:rules ["--defix" {:kind :single
+  {:rules ["--defix" {:kind  :single
                       :short "d"
-                      :help "Remove a directory name from function names."}
-           "--echo"  {:kind :flag
+                      :proxy "prefix"
+                      :help  "Remove prefix from all namespaces."}
+           "--echo"  {:kind  :flag
                       :short "e"
-                      :help "Prints output to stdout."}
-           "--input" {:kind :single
+                      :help  "Output to stdout rather than output file."}
+           "--input" {:kind  :single
                       :short "i"
-                      :help "Specify the project file."}
-           "--output" {:kind :single
+                      :proxy "path"
+                      :help  "Use <path> as project file."}
+           "--output" {:kind  :single
                        :short "o"
-                       :help "Specify the output file."}
-           "--private" {:kind :flag
+                       :proxy "path"
+                       :help  "Use <path> as output file."}
+           "--private" {:kind  :flag
                         :short "p"
-                        :help "Include private values."}
-           "--template" {:kind :single
+                        :help  "Include private values in output."}
+           "--link-parent" {:kind  :single
+                            :short "l"
+                            :proxy "url"
+                            :help  "Replace project root with <url> in source code links."}
+           "--template" {:kind  :single
                          :short "t"
-                         :help "Specify a template file."}]
+                         :proxy "path"
+                         :help  "Use template at <path> for output."}]
    :info {:about "A document generation tool for Janet projects."}})
 
 
@@ -65,24 +73,56 @@
   {{/modules}}
   ````)
 
+(defn- last-pos
+  ```
+  Return the position of the last occurrence of a character or nil
+  ```
+  [c s]
+  (var result nil)
+  (var value (get c 0))
+  (var i (length s))
+  (while (> i 0)
+    (when (= value (get s (-- i)))
+      (set result i)
+      (break)))
+  result)
 
-(defn- file-ext [path]
-  (def last-dot (last (string/find-all "." path)))
-  (string/slice path last-dot))
+
+(defn- file-ext
+  ```
+  Return the file extension in a path or nil if there is no extension
+  ```
+  [path]
+  (def last-sep (last-pos sep path))
+  (def last-dot (last-pos "." path))
+  (when (and last-dot
+             (or (nil? last-sep)
+                 (> last-dot last-sep)))
+    # use negative index to count from end
+    # increment by an extra 1 for '.'
+    (string/slice path last-dot)))
+
+
+(defn- parent-dir
+  ```
+  Determine the parent directory containing a file
+  ```
+  [path]
+  (if (or (string/has-prefix? (string "." sep) path)
+          (string/has-prefix? sep path))
+    (string/slice path 0 (inc (last-pos sep path)))
+    (string "." sep)))
 
 
 (defn- link
   ```
   Create a link to a specific line in a file
   ```
-  [{:file file :line line} local-parent remote-parent]
+  [{:file file :line line} project-root link-parent]
   (if (nil? file)
     nil
-    (if (and local-parent
-             remote-parent
-             (not (or (= "." local-parent)
-                      (empty? local-parent))))
-      (-> (string/replace local-parent remote-parent file)
+    (if (and project-root link-parent)
+      (-> (string/replace project-root link-parent file)
           (string "#L" line))
       (string file "#L" line))))
 
@@ -123,7 +163,7 @@
                   (and (not (nil? (item :value)))
                        (string/format "%q" (item :value))))
    :docstring (item :docstring)
-   :link      (link item (opts :local-parent) (opts :remote-parent))
+   :link      (link item (opts :project-root) (opts :link-parent))
    :in-link   (in-link (item :name))})
 
 
@@ -186,36 +226,36 @@
   Create a table of metadata
   ```
   [name meta maybe-ns]
-  (let [ns              (or (meta :ns) maybe-ns)
-        value           (or (meta :value) (first (meta :ref)))
-        [file line col] (source-map meta)
-        kind            (cond
-                          (meta :macro) :macro
-                          (meta :kind) (meta :kind)
-                          (type value))
-        private?        (meta :private)
-        docs            (meta :doc)
-        [sig docstring] (if (and docs (string/find "\n\n" docs))
-                          (string/split "\n\n" docs 0 2)
-                          [nil docs])]
-    {:name      name
-     :ns        ns
-     :value     value
-     :kind      kind
-     :private?  private?
-     :sig       sig
-     :docstring docstring
-     :file      file
-     :line      line}))
+  (def ns (or (meta :ns) maybe-ns))
+  (def value (or (meta :value) (first (meta :ref))))
+  (def [file line col] (source-map meta))
+  (def kind (cond (meta :macro) :macro
+                  (meta :kind) (meta :kind)
+                  (type value)))
+  (def private? (meta :private))
+  (def docs (meta :doc))
+  (def [sig docstring] (if (and docs (string/find "\n\n" docs))
+                         (string/split "\n\n" docs 0 2)
+                         [nil docs]))
+  {:name      name
+   :ns        ns
+   :value     value
+   :kind      kind
+   :private?  private?
+   :sig       sig
+   :docstring docstring
+   :file      file
+   :line      line})
 
 
 (defn- path->ns
   ```
   Convert a path to a 'namespace'
   ```
-  [path defix]
-  (def ext (file-ext path))
-  (string/slice path (length defix) (if (nil? ext) nil (inc (length ext)))))
+  [path project-root defix]
+  (string/slice path
+                (+ (length project-root) (length defix))
+                (last-pos ".janet" path)))
 
 
 (defn- find-aliases
@@ -228,10 +268,10 @@
   implementation would store the value of the aliased binding and use that later
   to check.
   ```
-  [envs defix]
+  [envs project-root defix]
   (def aliases @{})
   (each [path env] (pairs envs)
-    (def ns (path->ns path defix))
+    (def ns (path->ns path project-root defix))
     (each [name meta] (pairs env)
       (when (one? (length meta))
         (put aliases name ns))))
@@ -258,17 +298,19 @@
   Extract information about the bindings from the environments
   ```
   [envs opts]
+  (def project-root (opts :project-root))
   (def defix (opts :defix))
   (def include-private? (opts :include-private?))
-  (def aliases (find-aliases envs defix))
+  (def aliases (find-aliases envs project-root defix))
   (defn ns-or-alias [name ns]
-    (if-let [alias (aliases name)
-             _     (string/has-prefix? alias ns)]
+    (def alias (aliases name))
+    (if (and (not (nil? alias))
+             (string/has-prefix? alias ns))
       alias
       ns))
   (def bindings @[])
   (each [path env] (pairs envs)
-    (def ns (path->ns path defix))
+    (def ns (path->ns path project-root defix))
     (each [name meta] (pairs env)
       (when (and (document-name? name)
                  (or (not (meta :private))
@@ -292,18 +334,17 @@
   ```
   Extract the environment for a file in the project
   ```
-  [source paths]
+  [source]
   (def result @{})
   (defn source->path [source paths]
     (if (string/has-prefix? (paths :project) source)
       (string/replace (paths :project) "" source)
       source))
   (when (= ".janet" (file-ext source))
-    (def env (dofile (if (= "." (paths :project)) (string "." sep source) source)))
-    (def path (source->path source paths))
+    (def env (dofile source))
     (put env :current-file nil)
     (put env :source nil)
-    (put result path env))
+    (put result source env))
   result)
 
 
@@ -312,12 +353,15 @@
   Replace mixture of files and directories with files
   ```
   [paths &opt parent]
-  (default parent ".")
+  (default parent (string "." sep))
   (mapcat (fn [path]
-            (let [full-path (string parent sep path)]
-              (case (os/stat full-path :mode)
-                :file      full-path
-                :directory (gather-files (os/dir full-path) full-path))))
+            (def full-path (string parent path))
+            (case (os/stat full-path :mode)
+              :file
+              full-path
+
+              :directory
+              (gather-files (os/dir full-path) (string full-path sep))))
           paths))
 
 
@@ -354,34 +398,23 @@
   (validate-project-data result))
 
 
-(defn- detect-dir
-  ```
-  Determine the project directory relative to the path to the project file
-  ```
-  [project-file]
-  (def seps (string/find-all sep project-file))
-  (if (empty? seps)
-    "."
-    (string/slice project-file 0 (inc (array/peek seps)))))
-
-
 (defn- generate-doc
   ```
   Generate an API document for a project
   ```
   [opts]
   (def project-file (opts :project-file))
-  (def project-path (detect-dir project-file))
+  (def project-root (parent-dir project-file))
   (def project-data (parse-project project-file))
-  (put opts :local-parent project-path)
+  (put opts :project-root project-root)
 
   (def sources (-> (or (get-in project-data [:source :source])
                        (get-in project-data [:native :source]))
-                   (gather-files project-path)))
+                   (gather-files project-root)))
   (put opts :include-ns? (not= 1 (length sources)))
 
   (def envs (reduce (fn [envs source]
-                      (merge envs (extract-env source {:project project-path})))
+                      (merge envs (extract-env source)))
                     @{}
                     sources))
   (def bindings (extract-bindings envs opts))
@@ -403,6 +436,6 @@
                 :include-private? (get (args :opts) "private" false)
                 :output-file (get (args :opts) "output" "api.md")
                 :project-file (get (args :opts) "input" "project.janet")
-                :remote-parent ""
+                :link-parent ""
                 :template-file (get (args :opts) "template")})
     (generate-doc opts)))
