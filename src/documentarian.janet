@@ -6,32 +6,32 @@
 
 
 (def- config
-  {:rules ["--defix" {:kind  :single
-                      :short "d"
-                      :proxy "prefix"
-                      :help  "Remove prefix from all namespaces."}
-           "--echo"  {:kind  :flag
-                      :short "e"
-                      :help  "Output to stdout rather than output file."}
-           "--input" {:kind  :single
-                      :short "i"
-                      :proxy "path"
-                      :help  "Use <path> as project file."}
-           "--output" {:kind  :single
-                       :short "o"
-                       :proxy "path"
-                       :help  "Use <path> as output file."}
-           "--private" {:kind  :flag
-                        :short "p"
-                        :help  "Include private values in output."}
+  {:rules ["--defix"       {:kind  :single
+                            :short "d"
+                            :proxy "prefix"
+                            :help  "Remove prefix from all namespaces."}
+           "--echo"        {:kind  :flag
+                            :short "e"
+                            :help  "Output to stdout rather than output file."}
+           "--input"       {:kind  :single
+                            :short "i"
+                            :proxy "path"
+                            :help  "Use <path> as project file."}
            "--link-parent" {:kind  :single
                             :short "l"
                             :proxy "url"
                             :help  "Replace project root with <url> in source code links."}
-           "--template" {:kind  :single
-                         :short "t"
-                         :proxy "path"
-                         :help  "Use template at <path> for output."}]
+           "--output"      {:kind  :single
+                            :short "o"
+                            :proxy "path"
+                            :help  "Use <path> as output file."}
+           "--private"     {:kind  :flag
+                            :short "p"
+                            :help  "Include private values in output."}
+           "--template"    {:kind  :single
+                            :short "t"
+                            :proxy "path"
+                            :help  "Use template at <path> for output."}]
    :info {:about "A document generation tool for Janet projects."}})
 
 
