@@ -382,10 +382,10 @@
   Check that the data in the project.janet file includes everything we need
   ```
   [data]
-  (unless (and (data :project)
-               (or (data :source)
-                   (data :native)))
-    (error "Project file must contain declare-project and declare-source"))
+  (unless (data :project)
+    (error "Project file must contain declare-project"))
+  (unless (or (data :source) (data :native))
+    (error "Project file must contain declare-source or declare-native"))
   data)
 
 
