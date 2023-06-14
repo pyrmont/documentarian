@@ -39,14 +39,12 @@ headings and code blocks.
 [ls]: https://janet-lang.org/docs/strings.html
 
 By default, your documentation is saved to a file called `api.md` in the
-current working directory.
-
-Documentarian includes a simple template that is used to produce the `api.md`
-file. You can specify your own template file using the `-t` command-line
-argument (see below). The file must be in the [Mustache templating
-language][mustache]. Documentarian processes the template using [Musty][].
-Please note that Musty is an incomplete implementation and does not support the
-more advanced features of Mustache.
+current working directory. Documentarian includes a simple template that is
+used to produce the `api.md` file. You can specify your own template file using
+the `-t` command-line argument (see below). The file must be in the [Mustache
+templating language][mustache]. Documentarian processes the template using
+[Musty][]. Please note that Musty is an incomplete implementation and does not
+support the more advanced features of Mustache.
 
 [mustache]: http://mustache.github.io
 [Musty]: https://github.com/pyrmont/musty
