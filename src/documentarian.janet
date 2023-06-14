@@ -286,66 +286,23 @@
            bindings))
 
 
-(defn- require-c
-  ```
-  Extract metadata information about C functions from the source file
-  ```
-  [path]
-  (def env @{})
-  (def cfuns-grammar
-    # This assumes the enumeration of C functions in a particular mannner, see
-    # https://github.com/pyrmont/markable/blob/077ec6b7618d4e775e59705b28806c865ba67238/src/markable/converter.c#L73-L109
-    ~{:main (some (+ :cfuns 1))
-      :cfuns (* :declaration :assignment (some :cfun) :sentinel)
-      :declaration (* "static" :s+ "const" :s+ "JanetReg" (some (if-not "=" 1)))
-      :assignment (* "=" :s* "{" :s*)
-      :cfun (* "{" :name :pointer :docstring "}," :s*)
-      :name (* :s* `"` (line) '(some (if-not `"` 1)) `"` :s* ",")
-      :pointer (* :s* (some (+ :w :d (set "_-"))) :s* ",")
-      :docstring (* :s* (% (some (* `"` (some (+ :escape '(if-not `"` 1))) `"` :s*))))
-      :escape (+ (* `\n` (constant "\n"))
-                 (* `\t` (constant "\t"))
-                 (* `\"` (constant "\"")))
-      :sentinel (* "{" :s* "NULL" :s* "," :s* "NULL" :s* "," :s* "NULL" :s* "}")})
-  (def entry-grammar
-    # This assumes the registration of C functions in a particular manner, see
-    # https://github.com/pyrmont/markable/blob/077ec6b7618d4e775e59705b28806c865ba67238/src/markable/converter.c#L116-L118
-    ~{:main (some (+ :entry 1))
-      :entry (* "janet_cfuns" :s* "(" :s* "env" :s* "," :s* :ns :s* ",")
-      :ns (+ "NULL" (* `"` '(some (+ :w :d (set "_-/"))) `"`))})
-  (def source-code (slurp path))
-  (when-let [fns (peg/match cfuns-grammar source-code)
-             ns  (first (peg/match entry-grammar source-code))]
-    (assert (zero? (% (length fns) 3)) "error parsing C source code")
-    (each [line-num name docstring] (partition 3 fns)
-      (put env name {:kind "cfunction"
-                     :ns ns
-                     :doc docstring
-                     :source-map [path line-num 0]}))
-    env))
-
-
 (defn extract-env
   ```
   Extract the environment for a file in the project
   ```
   [source paths]
+  (def result @{})
   (defn source->path [source paths]
     (if (string/has-prefix? (paths :project) source)
       (string/replace (paths :project) "" source)
       source))
-  (cond
-    (= ".c" (file-ext source))
-    (let [path (source->path source paths)
-          env  (require-c path)]
-      {path env})
-
-    (= ".janet" (file-ext source))
-    (let [env    (dofile (if (= "." (paths :project)) (string "." sep source) source))
-          path   (source->path source paths)]
-      (put env :current-file nil)
-      (put env :source nil)
-      {path env})))
+  (when (= ".janet" (file-ext source))
+    (def env (dofile (if (= "." (paths :project)) (string "." sep source) source)))
+    (def path (source->path source paths))
+    (put env :current-file nil)
+    (put env :source nil)
+    (put result path env))
+  result)
 
 
 (defn gather-files
