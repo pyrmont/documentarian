@@ -10,36 +10,40 @@
                             :short "d"
                             :proxy "prefix"
                             :help  "Remove prefix from all namespaces."}
-           "--echo"        {:kind  :flag
-                            :short "e"
-                            :help  "Output to stdout rather than output file."}
-           "--exclude"     {:kind  :multi
-                            :short "x"
-                            :proxy "path"
-                            :help  "Exclude bindings in <path> from the output."}
-           "--input"       {:kind  :single
-                            :short "i"
-                            :proxy "path"
-                            :help  "Use <path> as project file."}
            "--link-parent" {:kind  :single
                             :short "l"
                             :proxy "url"
                             :help  "Replace project root with <url> in source code links."}
-           "--output"      {:kind  :single
-                            :short "o"
+           "-------------------------------------------"
+           "--exclude"     {:kind  :multi
+                            :short "x"
                             :proxy "path"
-                            :help  "Use <path> as output file."}
+                            :help  "Exclude bindings in <path> from the output."}
            "--private"     {:kind  :flag
                             :short "p"
                             :help  "Include private values in output."}
+           "-------------------------------------------"
+           "--input"       {:kind  :single
+                            :short "i"
+                            :proxy "path"
+                            :help  "Use <path> as project file."}
            "--syspath"     {:kind  :single
                             :short "s"
                             :proxy "path"
                             :help  "Set Janet's syspath to <path>."}
+           "-------------------------------------------"
+           "--echo"        {:kind  :flag
+                            :short "e"
+                            :help  "Output to stdout rather than output file."}
+           "--output"      {:kind  :single
+                            :short "o"
+                            :proxy "path"
+                            :help  "Use <path> as output file."}
            "--template"    {:kind  :single
                             :short "t"
                             :proxy "path"
-                            :help  "Use template at <path> for output."}]
+                            :help  "Use template at <path> for output."}
+           "-------------------------------------------"]
    :info {:about "A document generation tool for Janet projects."}})
 
 

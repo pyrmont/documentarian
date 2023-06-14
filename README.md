@@ -55,14 +55,18 @@ Documentarian supports the following command-line arguments:
 
 ```
  -d, --defix <prefix>       Remove prefix from all namespaces.
- -e, --echo                 Output to stdout rather than output file.
- -x, --exclude <path>       Exclude bindings in <path> from the output.
- -i, --input <path>         Use <path> as project file.
  -l, --link-parent <url>    Replace project root with <url> in source code links.
- -o, --output <path>        Use <path> as output file.
+
+ -x, --exclude <path>       Exclude bindings in <path> from the output.
  -p, --private              Include private values in output.
+
+ -i, --input <path>         Use <path> as project file.
  -s, --syspath <path>       Set Janet's syspath to <path>.
+
+ -e, --echo                 Output to stdout rather than output file.
+ -o, --output <path>        Use <path> as output file.
  -t, --template <path>      Use template at <path> for output.
+
  -h, --help                 Show this help message.
 ```
 
