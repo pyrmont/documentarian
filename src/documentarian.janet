@@ -90,7 +90,7 @@
 
 (defn- last-pos
   ```
-  Return the position of the last occurrence of a character or nil
+  Returns the position of the last occurrence of a character or nil
   ```
   [c s]
   (var result nil)
@@ -105,7 +105,7 @@
 
 (defn- file-ext
   ```
-  Return the file extension in a path or nil if there is no extension
+  Returns the file extension in a path or nil if there is no extension
   ```
   [path]
   (def last-sep (last-pos sep path))
@@ -132,7 +132,7 @@
 
 (defn- link
   ```
-  Create a link to a specific line in a file
+  Creates a link to a specific line in a file
   ```
   [{:file file :line line} project-root link-prefix]
   (if (nil? file)
@@ -146,7 +146,7 @@
 (def- headings @{})
 (defn- in-link
   ```
-  Create an internal link
+  Creates an internal link
 
   ```
   # Uses the algorithm at https://github.com/gjtorikian/html-pipeline/blob/main/lib/html/pipeline/toc_filter.rb
@@ -166,7 +166,7 @@
 
 (defn- binding->item
   ```
-  Prepare the fields for the template
+  Prepares the fields for the template
   ```
   [item num first? opts]
   {:num       num
@@ -185,7 +185,7 @@
 
 (defn- bindings->modules
   ```
-  Split an array of bindings into an array of modules.
+  Splits an array of bindings into an array of modules.
   ```
   [bindings opts]
   (def modules @[])
@@ -211,7 +211,7 @@
 
 (defn- emit-markdown
   ```
-  Create the Markdown-formatted strings
+  Creates the Markdown-formatted strings
   ```
   [bindings project opts]
   (def template (if (opts :template-file)
@@ -224,7 +224,7 @@
 
 (defn- source-map
   ```
-  Determine the source-map for a given set of metadata
+  Determines the source-map for a given set of metadata
   ```
   [meta]
   (or (meta :source-map)
@@ -239,7 +239,7 @@
 
 (defn- binding-details
   ```
-  Create a table of metadata
+  Creates a table of metadata
   ```
   [name meta maybe-ns]
   (def ns (or (meta :ns) maybe-ns))
@@ -266,7 +266,7 @@
 
 (defn- path->ns
   ```
-  Convert a path to a 'namespace'
+  Converts a path to a 'namespace'
   ```
   [path project-root defix]
   (string/slice path
@@ -276,7 +276,7 @@
 
 (defn- find-aliases
   ```
-  Find possible aliases
+  Finds possible aliases
 
   Bindings that are imported into a namespace and then exported have a `meta`
   length of 1. This can be used as a heuristic to build a table of possible
@@ -296,12 +296,9 @@
 
 (defn- document-name?
   ```
-  Given some binding in an environment, determine whether it's eligible for
-  rendering as documentation.
+  Returns whether a value of the name should be documented
 
-  Eligible bindings are:
-  - any bound symbol
-  - `:doc`
+  A value should be documented if it is a bound symbol or it is `:doc`.
   ```
   [name]
   (case name
@@ -311,7 +308,7 @@
 
 (defn- extract-bindings
   ```
-  Extract information about the bindings from the environments
+  Extracts information about the bindings from the environments
   ```
   [envs opts]
   (def project-root (opts :project-root))
@@ -348,7 +345,7 @@
 
 (defn- extract-env
   ```
-  Extract the environment for a file in the project
+  Extracts the environment for a file in the project
   ```
   [path]
   (def result @{})
@@ -364,7 +361,7 @@
 
 (defn- gather-files
   ```
-  Replace mixture of files and directories with files
+  Replaces mixture of files and directories with files
   ```
   [paths &opt parent exclusions]
   (default parent (string "." sep))
@@ -386,7 +383,7 @@
 
 (defn- validate-project-data
   ```
-  Check that the data in the project.janet file includes everything we need
+  Checks that the data in the project.janet file includes everything we need
   ```
   [data]
   (unless (data :project)
@@ -398,7 +395,7 @@
 
 (defn- parse-project
   ```
-  Parse a project.janet file
+  Parses a project.janet file
 
   This function returns a table of the values in the project file. The keys are
   the sections but without the leading `declare-` and inserted as keywords.
@@ -419,7 +416,7 @@
 
 (defn generate-doc
   ```
-  Generate an API document for a project
+  Generates an API document for a project
   ```
   [opts]
   (def project-file (opts :project-file))
