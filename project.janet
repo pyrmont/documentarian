@@ -14,6 +14,9 @@
   :entry "src/documentarian.janet"
   :install true)
 
+(declare-source
+  :source ["src/documentarian.janet"])
+
 (task "dev-deps" []
   (if-let [deps ((dyn :project) :dependencies)]
     (each dep deps

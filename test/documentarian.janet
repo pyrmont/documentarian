@@ -1,9 +1,9 @@
 (import testament :prefix "" :exit true)
-(import ../src/documentarian :as doc)
 
+(review ../src/documentarian :as doc)
 
 (deftest parse-project
-  (is (thrown? (doc/parse-project "project.janet"))))
+  (is (thrown? (doc/parse-project "fixtures/broken_project.janet"))))
 
 
 (deftest parse-project-with-file

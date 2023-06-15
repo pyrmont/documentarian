@@ -9,40 +9,43 @@
   {:rules ["--defix"       {:kind  :single
                             :short "d"
                             :proxy "prefix"
-                            :help  "Remove prefix from all namespaces."}
-           "--link-parent" {:kind  :single
-                            :short "l"
+                            :help  "Remove <prefix> from all namespaces."}
+           "--link-prefix" {:kind  :single
+                            :short "L"
                             :proxy "url"
-                            :help  "Replace project root with <url> in source code links."}
+                            :help  "Use <url> as prefix for source code links."}
            "-------------------------------------------"
            "--exclude"     {:kind  :multi
                             :short "x"
                             :proxy "path"
-                            :help  "Exclude bindings in <path> from the output."}
+                            :help  "Exclude bindings in <path> from the API document."}
            "--private"     {:kind  :flag
-                            :short "p"
-                            :help  "Include private values in output."}
+                            :short "P"
+                            :help  "Include private values in the API document."}
            "-------------------------------------------"
-           "--input"       {:kind  :single
-                            :short "i"
+           "--project"     {:kind  :single
+                            :short "p"
                             :proxy "path"
-                            :help  "Use <path> as project file."}
-           "--syspath"     {:kind  :single
-                            :short "s"
+                            :help  "Use <path> as project file. (Default: project.janet)"}
+           "--local"       {:kind  :flag
+                            :short "l"
+                            :help  "Set Janet's syspath to ./jpm_tree."}
+           "--tree"        {:kind  :single
+                            :short "t"
                             :proxy "path"
                             :help  "Set Janet's syspath to <path>."}
            "-------------------------------------------"
            "--echo"        {:kind  :flag
                             :short "e"
                             :help  "Output to stdout rather than output file."}
-           "--output"      {:kind  :single
+           "--out"         {:kind  :single
                             :short "o"
                             :proxy "path"
-                            :help  "Use <path> as output file."}
+                            :help  "Use <path> as filename for the API document. (Default: api.md)"}
            "--template"    {:kind  :single
-                            :short "t"
+                            :short "T"
                             :proxy "path"
-                            :help  "Use template at <path> for output."}
+                            :help  "Use <path> as template for the API document."}
            "-------------------------------------------"]
    :info {:about "A document generation tool for Janet projects."}})
 
@@ -131,11 +134,11 @@
   ```
   Create a link to a specific line in a file
   ```
-  [{:file file :line line} project-root link-parent]
+  [{:file file :line line} project-root link-prefix]
   (if (nil? file)
     nil
-    (if (and project-root link-parent)
-      (-> (string/replace project-root link-parent file)
+    (if (and project-root link-prefix)
+      (-> (string/replace project-root link-prefix file)
           (string "#L" line))
       (string file "#L" line))))
 
@@ -161,7 +164,7 @@
     (string key "-" i)))
 
 
-(defn binding->item
+(defn- binding->item
   ```
   Prepare the fields for the template
   ```
@@ -176,7 +179,7 @@
                   (and (not (nil? (item :value)))
                        (string/format "%q" (item :value))))
    :docstring (item :docstring)
-   :link      (link item (opts :project-root) (opts :link-parent))
+   :link      (link item (opts :project-root) (opts :link-prefix))
    :in-link   (in-link (item :name))})
 
 
@@ -206,7 +209,7 @@
   modules)
 
 
-(defn emit-markdown
+(defn- emit-markdown
   ```
   Create the Markdown-formatted strings
   ```
@@ -291,7 +294,7 @@
   aliases)
 
 
-(defn document-name?
+(defn- document-name?
   ```
   Given some binding in an environment, determine whether it's eligible for
   rendering as documentation.
@@ -306,7 +309,7 @@
     (symbol? name)))
 
 
-(defn extract-bindings
+(defn- extract-bindings
   ```
   Extract information about the bindings from the environments
   ```
@@ -343,7 +346,7 @@
            bindings))
 
 
-(defn extract-env
+(defn- extract-env
   ```
   Extract the environment for a file in the project
   ```
@@ -359,7 +362,7 @@
   result)
 
 
-(defn gather-files
+(defn- gather-files
   ```
   Replace mixture of files and directories with files
   ```
@@ -393,7 +396,7 @@
   data)
 
 
-(defn parse-project
+(defn- parse-project
   ```
   Parse a project.janet file
 
@@ -414,7 +417,7 @@
   (validate-project-data result))
 
 
-(defn- generate-doc
+(defn generate-doc
   ```
   Generate an API document for a project
   ```
@@ -437,7 +440,7 @@
   (when-let [sources (get-in project-data [:source :source])]
     (def exclusions (map (fn [x] (string project-root x)) (opts :exclude)))
     (def paths (gather-files sources project-root exclusions))
-    (reduce (fn [e p] (merge e (extract-env p))) envs paths))
+    (reduce (fn [e p] (merge-into e (extract-env p))) envs paths))
 
   (when-let [name (get-in project-data [:native :name])]
     (put envs (string project-root name) ((extract-env name) name)))
@@ -452,18 +455,19 @@
     (spit (opts :output-file) document)))
 
 
-(defn main
+(defn- main
   [& argv]
   (def args (argy/parse-args config))
   (unless (or (args :help?) (args :error?))
+    (def syspath (if (get (args :opts) "local") "jpm_tree" (get (args :opts) "tree")))
     (def opts @{:defix (get (args :opts) "defix" "")
                 :echo? (get (args :opts) "echo" false)
                 :exclude (get (args :opts) "exclude" [])
                 :include-private? (get (args :opts) "private" false)
-                :link-parent ""
-                :output-file (get (args :opts) "output" "api.md")
-                :project-file (get (args :opts) "input" "project.janet")
-                :syspath (get (args :opts) "syspath")
+                :link-prefix (get (args :opts) "link-prefix" "")
+                :output-file (get (args :opts) "out" "api.md")
+                :project-file (get (args :opts) "project" "project.janet")
+                :syspath (when syspath (string syspath sep "lib"))
                 :template-file (get (args :opts) "template")})
     (try
       (generate-doc opts)

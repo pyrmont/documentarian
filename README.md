@@ -54,18 +54,19 @@ support the more advanced features of Mustache.
 Documentarian supports the following command-line arguments:
 
 ```
- -d, --defix <prefix>       Remove prefix from all namespaces.
- -l, --link-parent <url>    Replace project root with <url> in source code links.
+ -d, --defix <prefix>       Remove <prefix> from all namespaces.
+ -L, --link-prefix <url>    Use <url> as prefix for source code links.
 
- -x, --exclude <path>       Exclude bindings in <path> from the output.
- -p, --private              Include private values in output.
+ -x, --exclude <path>       Exclude bindings in <path> from the API document.
+ -P, --private              Include private values in the API document.
 
- -i, --input <path>         Use <path> as project file.
- -s, --syspath <path>       Set Janet's syspath to <path>.
+ -p, --project <path>       Use <path> as project file. (Default: project.janet)
+ -l, --local                Set Janet's syspath to ./jpm_tree.
+ -t, --tree <path>          Set Janet's syspath to <path>.
 
  -e, --echo                 Output to stdout rather than output file.
- -o, --output <path>        Use <path> as output file.
- -t, --template <path>      Use template at <path> for output.
+ -o, --out <path>           Use <path> as filename for the API document. (Default: api.md)
+ -T, --template <path>      Use <path> as template for the API document.
 
  -h, --help                 Show this help message.
 ```
