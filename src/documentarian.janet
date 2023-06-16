@@ -458,22 +458,29 @@
     (spit (opts :output-file) document)))
 
 
+(defn args->opts
+  ```
+  Converts Argy-Bargy processed args into options for use with generate-doc
+  ```
+  [args]
+  @{:defix (get (args :opts) "defix" "")
+    :echo? (get (args :opts) "echo" false)
+    :exclude (get (args :opts) "exclude" [])
+    :include-private? (get (args :opts) "private" false)
+    :link-prefix (get (args :opts) "link-prefix" "")
+    :output-file (get (args :opts) "out" "api.md")
+    :project-file (get (args :opts) "project" "project.janet")
+    :syspath (when syspath (string syspath sep "lib"))
+    :template-file (get (args :opts) "template")})
+
+
 (defn- main
   [& argv]
   (def args (argy/parse-args config))
   (unless (or (args :help?) (args :error?))
     (def syspath (if (get (args :opts) "local") "jpm_tree" (get (args :opts) "tree")))
-    (def opts @{:defix (get (args :opts) "defix" "")
-                :echo? (get (args :opts) "echo" false)
-                :exclude (get (args :opts) "exclude" [])
-                :include-private? (get (args :opts) "private" false)
-                :link-prefix (get (args :opts) "link-prefix" "")
-                :output-file (get (args :opts) "out" "api.md")
-                :project-file (get (args :opts) "project" "project.janet")
-                :syspath (when syspath (string syspath sep "lib"))
-                :template-file (get (args :opts) "template")})
     (try
-      (generate-doc opts)
+      (generate-doc (args->opts args))
       ([err]
        (eprint "documentarian: " err)
        (os/exit 1)))))
