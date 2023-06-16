@@ -32,11 +32,11 @@
                             :help  "Use <path> as project file. (Default: project.janet)"}
            "--local"       {:kind  :flag
                             :short "l"
-                            :help  "Set Janet's syspath to ./jpm_tree."}
+                            :help  "Set Janet's modpath to ./jpm_tree."}
            "--tree"        {:kind  :single
                             :short "t"
                             :proxy "path"
-                            :help  "Set Janet's syspath to <path>."}
+                            :help  "Set Janet's modpath to <path>."}
            "-------------------------------------------"
            "--echo"        {:kind  :flag
                             :short "e"
@@ -430,8 +430,8 @@
   (def project-data (parse-project project-file))
   (put opts :project-root project-root)
 
-  (unless (nil? (opts :syspath))
-    (put root-env :syspath (opts :syspath)))
+  (unless (nil? (opts :modpath))
+    (put root-env :modpath (opts :modpath)))
 
   (defn check-build-dir [name]
     (def path (string project-root "build" sep name ".so"))
@@ -463,6 +463,7 @@
   Converts Argy-Bargy processed args into options for use with generate-doc
   ```
   [args]
+  (def modpath (if (get (args :opts) "local") "jpm_tree" (get (args :opts) "tree")))
   @{:defix (get (args :opts) "defix" "")
     :echo? (get (args :opts) "echo" false)
     :exclude (get (args :opts) "exclude" [])
@@ -470,7 +471,7 @@
     :link-prefix (get (args :opts) "link-prefix" "")
     :output-file (get (args :opts) "out" "api.md")
     :project-file (get (args :opts) "project" "project.janet")
-    :syspath (when syspath (string syspath sep "lib"))
+    :modpath (when modpath (string modpath sep "lib"))
     :template-file (get (args :opts) "template")})
 
 
@@ -478,7 +479,6 @@
   [& argv]
   (def args (argy/parse-args config))
   (unless (or (args :help?) (args :error?))
-    (def syspath (if (get (args :opts) "local") "jpm_tree" (get (args :opts) "tree")))
     (try
       (generate-doc (args->opts args))
       ([err]
