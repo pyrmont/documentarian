@@ -5,7 +5,10 @@
 (def- sep (if (= :windows (os/which)) "\\" "/"))
 
 
-(def- config
+(def config
+  ```
+  The configuration for Argy-Bargy
+  ```
   {:rules ["--defix"       {:kind  :single
                             :short "d"
                             :proxy "prefix"
@@ -50,7 +53,10 @@
    :info {:about "A document generation tool for Janet projects."}})
 
 
-(def- default-template
+(def default-template
+  ```
+  The default template for generating the API document
+  ```
   ````
   # {{project-name}} API
 
