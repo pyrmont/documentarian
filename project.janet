@@ -11,11 +11,11 @@
 
 (declare-executable
   :name "documentarian"
-  :entry "src/documentarian.janet"
+  :entry "documentarian.janet"
   :install true)
 
 (declare-source
-  :source ["src/documentarian.janet"])
+  :source ["documentarian.janet"])
 
 (task "dev-deps" []
   (if-let [deps ((dyn :project) :dependencies)]

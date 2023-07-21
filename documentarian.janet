@@ -477,7 +477,7 @@
 
 (defn- main
   [& argv]
-  (def args (argy/parse-args config))
+  (def args (argy/parse-args "documentarian" config))
   (unless (or (args :help?) (args :error?))
     (try
       (generate-doc (args->opts args))
