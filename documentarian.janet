@@ -126,13 +126,11 @@
 
 (defn- parent-dir
   ```
-  Determine the parent directory containing a file
+  Determines the parent directory containing a file
   ```
   [path]
-  (if (or (string/has-prefix? (string "." sep) path)
-          (string/has-prefix? (string ".." sep) path)
-          (string/has-prefix? sep path))
-    (string/slice path 0 (inc (last-pos sep path)))
+  (if-let [pos (last-pos sep path)]
+    (string/slice path 0 (inc pos))
     (string "." sep)))
 
 
