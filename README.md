@@ -15,13 +15,13 @@ can be included in your repository and read easily on services like GitHub.
 
 To install, run:
 
-```console
+```shell
 $ jpm install https://github.com/pyrmont/documentarian
 ```
 
 ## Usage
 
-```console
+```shell
 $ /path/to/documentarian
 ```
 
@@ -69,28 +69,6 @@ Documentarian supports the following command-line arguments:
  -T, --template <path>      Use <path> as template for the API document.
 
  -h, --help                 Show this help message.
-```
-
-## Development
-
-### Preparing
-
-Clone the repository and then run:
-
-```console
-$ jpm [-l] run dev-deps
-```
-
-### Building
-
-```console
-$ jpm [-l] build
-```
-
-### Testing
-
-```console
-$ jpm [-l] test
 ```
 
 ## Bugs

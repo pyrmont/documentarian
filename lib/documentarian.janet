@@ -1,56 +1,7 @@
-(import argy-bargy :as argy)
-(import musty)
+(import ../deps/musty/src/musty)
 
 
-(def- sep (if (= :windows (os/which)) "\\" "/"))
-
-
-(def config
-  ```
-  The configuration for Argy-Bargy
-  ```
-  {:rules ["--defix"       {:kind  :single
-                            :short "d"
-                            :proxy "prefix"
-                            :help  "Remove <prefix> from all namespaces."}
-           "--link-prefix" {:kind  :single
-                            :short "L"
-                            :proxy "url"
-                            :help  "Use <url> as prefix for source code links."}
-           "-------------------------------------------"
-           "--exclude"     {:kind  :multi
-                            :short "x"
-                            :proxy "path"
-                            :help  "Exclude bindings in <path> from the API document."}
-           "--private"     {:kind  :flag
-                            :short "P"
-                            :help  "Include private values in the API document."}
-           "-------------------------------------------"
-           "--project"     {:kind  :single
-                            :short "p"
-                            :proxy "path"
-                            :help  "Use <path> as project file. (Default: project.janet)"}
-           "--local"       {:kind  :flag
-                            :short "l"
-                            :help  "Set Janet's modpath to ./jpm_tree."}
-           "--tree"        {:kind  :single
-                            :short "t"
-                            :proxy "path"
-                            :help  "Set Janet's modpath to <path>."}
-           "-------------------------------------------"
-           "--echo"        {:kind  :flag
-                            :short "e"
-                            :help  "Output to stdout rather than output file."}
-           "--out"         {:kind  :single
-                            :short "o"
-                            :proxy "path"
-                            :help  "Use <path> as filename for the API document. (Default: api.md)"}
-           "--template"    {:kind  :single
-                            :short "T"
-                            :proxy "path"
-                            :help  "Use <path> as template for the API document."}
-           "-------------------------------------------"]
-   :info {:about "A document generation tool for Janet projects."}})
+(def sep (if (= :windows (os/which)) "\\" "/"))
 
 
 (def default-template
@@ -93,6 +44,7 @@
   {{/items}}
   {{/modules}}
   ````)
+
 
 (defn- last-pos
   ```
@@ -148,6 +100,8 @@
 
 
 (def- headings @{})
+
+
 (defn- in-link
   ```
   Creates an internal link
@@ -454,31 +408,3 @@
   (if (opts :echo?)
     (print document)
     (spit (opts :output-file) document)))
-
-
-(defn args->opts
-  ```
-  Converts Argy-Bargy processed args into options for use with generate-doc
-  ```
-  [args]
-  (def modpath (if (get (args :opts) "local") "jpm_tree" (get (args :opts) "tree")))
-  @{:defix (get (args :opts) "defix" "")
-    :echo? (get (args :opts) "echo" false)
-    :exclude (get (args :opts) "exclude" [])
-    :include-private? (get (args :opts) "private" false)
-    :link-prefix (get (args :opts) "link-prefix" "")
-    :output-file (get (args :opts) "out" "api.md")
-    :project-file (get (args :opts) "project" "project.janet")
-    :modpath (when modpath (string modpath sep "lib"))
-    :template-file (get (args :opts) "template")})
-
-
-(defn- main
-  [& argv]
-  (def args (argy/parse-args "documentarian" config))
-  (unless (or (args :help?) (args :error?))
-    (try
-      (generate-doc (args->opts args))
-      ([err]
-       (eprint "documentarian: " err)
-       (os/exit 1)))))

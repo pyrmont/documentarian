@@ -1,0 +1,4 @@
+#!/usr/bin/env janet
+(import documentarian/lib/cli)
+
+(cli/run)
