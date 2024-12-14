@@ -16,7 +16,9 @@
 
   {{/project-doc}}
   {{#modules}}
+  {{#ns}}
   ## {{ns}}
+  {{/ns}}
 
   {{#items}}{{^first}}, {{/first}}[{{name}}](#{{in-link}}){{/items}}
 
@@ -99,16 +101,13 @@
       (string file "#L" line))))
 
 
-(def- headings @{})
-
-
 (defn- in-link
   ```
   Creates an internal link
 
   ```
   # Uses the algorithm at https://github.com/gjtorikian/html-pipeline/blob/main/lib/html/pipeline/toc_filter.rb
-  [name]
+  [name headings]
   (def key (-> (peg/match ~{:main    (% (any (+ :kept :changed :ignored)))
                             :kept    (<- (+ :w+ (set "_-")))
                             :changed (/ (<- " ") "-")
@@ -138,7 +137,7 @@
                        (string/format "%q" (item :value))))
    :docstring (item :docstring)
    :link      (link item (opts :project-root) (opts :link-prefix))
-   :in-link   (in-link (item :name))})
+   :in-link   (in-link (item :name) (opts :headings))})
 
 
 (defn- bindings->modules
@@ -153,10 +152,11 @@
   (var first? false)
   (loop [i :range [0 (length bindings)]
            :let [binding (get bindings i)]]
-    (if (= curr-ns (binding :ns))
+    (def ns (if (= "" (binding :ns)) false (binding :ns)))
+    (if (= curr-ns ns)
       (set first? false)
       (do
-        (set curr-ns (binding :ns))
+        (set curr-ns ns)
         (set items @[])
         (set module @{:ns curr-ns :items items})
         (set first? true)
@@ -175,6 +175,7 @@
   (def template (if (opts :template-file)
                   (slurp (opts :template-file))
                   default-template))
+  (put opts :headings @{})
   (musty/render template {:project-name (project :name)
                           :project-doc  (project :doc)
                           :modules      (bindings->modules bindings opts)}))
@@ -291,7 +292,8 @@
           (array/push bindings {:ns ns :doc meta})
 
           (one? (length meta)) # Only aliased bindings should have a meta length of 1
-          nil
+          (->> (binding-details name (table/getproto meta) ns)
+               (array/push bindings))
 
           (->> (ns-or-alias name ns)
                (binding-details name meta)
@@ -321,21 +323,21 @@
   ```
   Replaces mixture of files and directories with files
   ```
-  [paths &opt parent exclusions]
+  [paths &opt parent excludes]
   (default parent (string "." sep))
-  (default exclusions [])
+  (default excludes [])
   (mapcat (fn [path]
             (def full-path (string parent path))
             (def kind (os/stat full-path :mode))
             (cond
-              (find (fn [x] (string/has-prefix? x full-path)) exclusions)
+              (find (fn [x] (string/has-prefix? x full-path)) excludes)
               []
 
               (= :file kind)
               full-path
 
               (= :directory kind)
-              (gather-files (os/dir full-path) (string full-path sep) exclusions)))
+              (gather-files (os/dir full-path) (string full-path sep) excludes)))
           paths))
 
 
@@ -393,8 +395,8 @@
 
   (def envs @{})
   (when-let [sources (get-in project-data [:source :source])]
-    (def exclusions (map (fn [x] (string project-root x)) (opts :exclude)))
-    (def paths (gather-files sources project-root exclusions))
+    (def excludes (map (fn [x] (string project-root x)) (opts :exclude)))
+    (def paths (gather-files (or (opts :only) sources) project-root excludes))
     (reduce (fn [e p] (merge-into e (extract-env p))) envs paths))
 
   (when-let [name (get-in project-data [:native :name])]

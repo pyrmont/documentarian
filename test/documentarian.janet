@@ -98,8 +98,8 @@
   (def expect
     (string "# Example API\n\n"
             "## example\n\n"
-            "[example](#example-1), "
-            "[example*](#example-2), "
+            "[example](#example), "
+            "[example*](#example-1), "
             "[example2](#example2)\n\n"
             "## example\n\n"
             "**function**  | [source][1]\n\n\n"
@@ -117,7 +117,7 @@
     [{:name 'example :ns "example" :kind :function :docstring "This is an example." :file "example.janet" :line 1}
      {:name 'example* :ns "example" :kind :function :docstring "This is an example." :file "example.janet" :line 2}
      {:name 'example2 :ns "example" :kind :function :docstring "This is an example." :file "example.janet" :line 3}])
-  (def actual (doc/emit-markdown bindings {:name "Example"} {}))
+  (def actual (doc/emit-markdown bindings {:name "Example"} @{}))
   (is (== expect actual)))
 
 
@@ -134,7 +134,7 @@
     [{:name 'example :ns "example" :kind :function :docstring sample-docstring}
      {:name :doc :ns "example" :kind :string :doc sample-docstring}])
 
-  (let [lines (->> (doc/emit-markdown bindings {:name "Example" :doc sample-docstring} {})
+  (let [lines (->> (doc/emit-markdown bindings {:name "Example" :doc sample-docstring} @{})
                    (string/split "\n"))
         [project-docstring mod-docstring fn-docstring] (filter (partial string/find "sample") lines)
         [project-code-block mod-code-block fn-code-block] (filter (partial string/find "fenced") lines)]

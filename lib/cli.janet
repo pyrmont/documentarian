@@ -15,6 +15,10 @@
                             :proxy "url"
                             :help  "Use <url> as prefix for source code links."}
            "-------------------------------------------"
+           "--only"        {:kind  :multi
+                            :short "O"
+                            :proxy "path"
+                            :help  "Only create entries for bindings in <path> in the API document."}
            "--exclude"     {:kind  :multi
                             :short "x"
                             :proxy "path"
@@ -61,6 +65,7 @@
     :exclude (get-in args [:opts "exclude"] [])
     :include-private? (get-in args [:opts "private"] false)
     :link-prefix (get-in args [:opts "link-prefix"] "")
+    :only (get-in args [:opts "only"])
     :output-file (get-in args [:opts "out"] "api.md")
     :project-file (get-in args [:opts "project"] "project.janet")
     :modpath (when modpath (string modpath doc/sep "lib"))
