@@ -11,7 +11,7 @@ Documentarian makes it easy to take the docstrings you've already written for
 your code and turn them into a simple Markdown-formatted document. This document
 can be included in your repository and read easily on services like GitHub.
 
-## Installing
+## Installation
 
 To install, run:
 
@@ -84,11 +84,3 @@ Documentarian is licensed under the MIT Licence. See [LICENSE][] for more
 details.
 
 [LICENSE]: https://github.com/pyrmont/documentarian/blob/master/LICENSE
-
-## Thanks
-
-Special thanks to Andrew Chambers ([@andrewchambers][]) and Zach Smith
-([@subsetpark][]) for their feedback and suggestions.
-
-[@andrewchambers]: https://github.com/andrewchambers
-[@subsetpark]: https://github.com/subsetpark
