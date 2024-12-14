@@ -57,12 +57,13 @@ Documentarian supports the following command-line arguments:
  -d, --defix <prefix>       Remove <prefix> from all namespaces.
  -L, --link-prefix <url>    Use <url> as prefix for source code links.
 
+ -O, --only <path>          Only create entries for bindings in <path> in the API document.
  -x, --exclude <path>       Exclude bindings in <path> from the API document.
  -P, --private              Include private values in the API document.
 
  -p, --project <path>       Use <path> as project file. (Default: project.janet)
- -l, --local                Set Janet's syspath to ./jpm_tree.
- -t, --tree <path>          Set Janet's syspath to <path>.
+ -l, --local                Set Janet's modpath to ./jpm_tree.
+ -t, --tree <path>          Set Janet's modpath to <path>.
 
  -e, --echo                 Output to stdout rather than output file.
  -o, --out <path>           Use <path> as filename for the API document. (Default: api.md)
