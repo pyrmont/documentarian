@@ -109,13 +109,13 @@
   ```
   # Uses the algorithm at https://github.com/gjtorikian/html-pipeline/blob/main/lib/html/pipeline/toc_filter.rb
   [name]
-  (def key (-> (peg/match ~{:main      (% (any (+ :kept :changed :ignored)))
-                            :kept      (<- (+ :w+ (set "_-")))
-                            :changed   (/ (<- " ") "-")
-                            :ignored   1}
+  (def key (-> (peg/match ~{:main    (% (any (+ :kept :changed :ignored)))
+                            :kept    (<- (+ :w+ (set "_-")))
+                            :changed (/ (<- " ") "-")
+                            :ignored 1}
                           name)
                (first)))
-  (def i (or (get headings key) 0))
+  (def i (get headings key 0))
   (put headings key (inc i))
   (if (zero? i)
     key

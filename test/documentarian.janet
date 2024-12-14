@@ -98,8 +98,8 @@
   (def expect
     (string "# Example API\n\n"
             "## example\n\n"
-            "[example](#example), "
-            "[example*](#example-1), "
+            "[example](#example-1), "
+            "[example*](#example-2), "
             "[example2](#example2)\n\n"
             "## example\n\n"
             "**function**  | [source][1]\n\n\n"
