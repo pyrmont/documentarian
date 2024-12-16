@@ -9,42 +9,42 @@
   The default template for generating the API document
   ```
   ````
-  # {{project-name}} API
+# {{project-name}} API
 
-  {{#project-doc}}
-  {{&project-doc}}
+{{#project-doc}}
+{{&project-doc}}
 
-  {{/project-doc}}
-  {{#modules}}
-  {{#ns}}
-  ## {{ns}}
-  {{/ns}}
+{{/project-doc}}
+{{#modules}}
+{{#ns}}
+## {{ns}}
+{{/ns}}
 
-  {{#items}}{{^first}}, {{/first}}[{{name}}](#{{in-link}}){{/items}}
+{{#items}}{{^first}}, {{/first}}[{{name}}](#{{in-link}}){{/items}}
 
-  {{#doc}}
-  {{&doc}}
+{{#doc}}
+{{&doc}}
 
-  {{/doc}}
-  {{#items}}
-  ## {{name}}
+{{/doc}}
+{{#items}}
+## {{name}}
 
-  **{{kind}}** {{#private?}}| **private**{{/private?}} {{#link}}| [source][{{num}}]{{/link}}
+**{{kind}}** {{#private?}}| **private**{{/private?}} {{#link}}| [source][{{num}}]{{/link}}
 
-  {{#sig}}
-  ```janet
-  {{&sig}}
-  ```
-  {{/sig}}
+{{#sig}}
+```janet
+{{&sig}}
+```
+{{/sig}}
 
-  {{&docstring}}
+{{&docstring}}
 
-  {{#link}}
-  [{{num}}]: {{link}}
-  {{/link}}
+{{#link}}
+[{{num}}]: {{link}}
+{{/link}}
 
-  {{/items}}
-  {{/modules}}
+{{/items}}
+{{/modules}}
   ````)
 
 
