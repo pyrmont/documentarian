@@ -5,11 +5,11 @@
 
 
 (deftest parse-project
-  (is (thrown? (doc/parse-project "fixtures/broken_project.janet"))))
+  (is (thrown? (doc/parse-project "res/fixtures/broken_project.janet"))))
 
 
 (deftest parse-project-with-file
-  (def actual (doc/parse-project "fixtures/project.janet"))
+  (def actual (doc/parse-project "res/fixtures/project.janet"))
   (def expect {:project {:name "Example"
                          :url "https://github.com/pyrmont/example"
                          :doc "This is an example of project-level\ndocumentation."}
@@ -18,7 +18,7 @@
 
 
 (deftest extract-env-from-defs
-  (def source "fixtures/defn.janet")
+  (def source "res/fixtures/defn.janet")
   (def env (doc/extract-env source))
   (def actual (get-in env [source 'example]))
   (def expect {:doc "(example)\n\nThis is an example function" :source-map [source 1 1]})
@@ -28,7 +28,7 @@
 
 
 (deftest extract-env-from-declared-vars-1
-  (def source "fixtures/varfn.janet")
+  (def source "res/fixtures/varfn.janet")
   (def env (doc/extract-env source))
   (def actual (get-in env [source 'example]))
   (def expect {:doc "(example)\n\nThis is an example function" :source-map [source 1 1]})
@@ -38,7 +38,7 @@
 
 
 (deftest extract-env-from-declared-vars-2
-  (def source "fixtures/varfn.janet")
+  (def source "res/fixtures/varfn.janet")
   (def env (doc/extract-env source))
   (def actual (get-in env [source 'example2]))
   (def expect {:doc "(example2)\n\nThis is an example function"})
