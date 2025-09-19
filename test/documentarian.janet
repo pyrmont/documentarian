@@ -1,4 +1,4 @@
-(import /deps/testament/src/testament :prefix "" :exit true)
+(import /deps/testament :prefix "" :exit true)
 
 
 (review ../lib/documentarian :as doc)
