@@ -1,4 +1,4 @@
-(import ../deps/musty/src/musty)
+(import ../deps/musty)
 
 
 (def sep (if (= :windows (os/which)) "\\" "/"))
