@@ -1,9 +1,9 @@
 # Documentarian
 
-[![Build Status][icon]][status]
+[![Test Status][icon]][status]
 
-[icon]: https://github.com/pyrmont/documentarian/workflows/build/badge.svg
-[status]: https://github.com/pyrmont/documentarian/actions?query=workflow%3Abuild
+[icon]: https://github.com/pyrmont/documentarian/workflows/test/badge.svg
+[status]: https://github.com/pyrmont/documentarian/actions?query=workflow%3Atest
 
 Documentarian is a minimal documentation generation tool for Janet projects.
 
