@@ -1,12 +1,9 @@
-(import /deps/testament :prefix "" :exit true)
-
+(import ../deps/testament :prefix "" :exit true)
 
 (review ../lib/documentarian :as doc)
 
-
 (deftest parse-project
   (is (thrown? (doc/parse-project "res/fixtures/broken_project.janet"))))
-
 
 (deftest parse-project-with-file
   (def actual (doc/parse-project "res/fixtures/project.janet"))
@@ -15,7 +12,6 @@
                          :doc "This is an example of project-level\ndocumentation."}
                :source  {:source ["src/example.janet"]}})
   (is (== expect actual)))
-
 
 (deftest extract-env-from-defs
   (def source "res/fixtures/defn.janet")
@@ -26,7 +22,6 @@
   (is (== (expect :source-map) (actual :source-map)))
   (is (== :function (type (actual :value)))))
 
-
 (deftest extract-env-from-declared-vars-1
   (def source "res/fixtures/varfn.janet")
   (def env (doc/extract-env source))
@@ -36,7 +31,6 @@
   (is (== (expect :source-map) (actual :source-map)))
   (is (== :function (type (get-in actual [:ref 0])))))
 
-
 (deftest extract-env-from-declared-vars-2
   (def source "res/fixtures/varfn.janet")
   (def env (doc/extract-env source))
@@ -45,18 +39,15 @@
   (is (== (expect :doc) (actual :doc)))
   (is (== :function (type (get-in actual [:ref 0])))))
 
-
 (deftest gather-files
   (def actual (doc/gather-files ["test"]))
   (def expect ["./test/documentarian.janet"])
   (is (== actual expect)))
 
-
 (deftest gather-files-with-exclusions
   (def actual (doc/gather-files ["fixtures"] "./" ["./fixtures"]))
   (def expect [])
   (is (== actual expect)))
-
 
 (deftest bindings-with-private-items
   (def env {"./example.janet" {'example {:private true}}})
@@ -64,7 +55,6 @@
   (def actual (doc/extract-bindings env opts))
   (def expect [])
   (is (== expect actual)))
-
 
 (deftest bindings-with-items
   (def env1 {"./example.janet" {'example {:value "Example"
@@ -93,7 +83,6 @@
                  :name 'example}])
   (is (== expect2 actual2)))
 
-
 (deftest markdown-output
   (def expect
     (string "# Example API\n\n"
@@ -104,11 +93,11 @@
             "## example\n\n"
             "**function**  | [source][1]\n\n\n"
             "This is an example.\n\n"
-            "[1]: example.janet#L1\n\n"
+            "[1]: example.janet#L1\n\n\n"
             "## example*\n\n"
             "**function**  | [source][2]\n\n\n"
             "This is an example.\n\n"
-            "[2]: example.janet#L2\n\n"
+            "[2]: example.janet#L2\n\n\n"
             "## example2\n\n"
             "**function**  | [source][3]\n\n\n"
             "This is an example.\n\n"
@@ -119,7 +108,6 @@
      {:name 'example2 :ns "example" :kind :function :docstring "This is an example." :file "example.janet" :line 3}])
   (def actual (doc/emit-markdown bindings {:name "Example"} @{}))
   (is (== expect actual)))
-
 
 (deftest quotes-in-codeblocks
   (def sample-docstring
@@ -133,16 +121,13 @@
   (def bindings
     [{:name 'example :ns "example" :kind :function :docstring sample-docstring}
      {:name :doc :ns "example" :kind :string :doc sample-docstring}])
-
   (let [lines (->> (doc/emit-markdown bindings {:name "Example" :doc sample-docstring} @{})
                    (string/split "\n"))
         [project-docstring mod-docstring fn-docstring] (filter (partial string/find "sample") lines)
         [project-code-block mod-code-block fn-code-block] (filter (partial string/find "fenced") lines)]
-
     (each md [project-docstring mod-docstring fn-docstring]
       (is (== "A sample docstring with \"quotes\"." md)))
     (each md [project-code-block mod-code-block fn-code-block]
       (is (== "A fenced code block with \"quotes\"." md)))))
-
 
 (run-tests!)

@@ -6,28 +6,26 @@
  :url "https://github.com/pyrmont/documentation"
  :repo "git+https://github.com/pyrmont/documentation"
 
- :vendored {
-   "deps" [
-     {:name "argy-bargy"
-      :url "https://github.com/pyrmont/argy-bargy"
-      :prefix "argy-bargy"
-      :files ["argy-bargy.janet"
-              "LICENSE"]}
-     {:name "musty"
-      :url "https://github.com/pyrmont/musty"
-      :prefix "musty"
-      :files ["lib/musty.janet"
-              "init.janet"
-              "LICENSE"]}
-     {:name "testament"
-      :url "https://github.com/pyrmont/testament"
-      :prefix "testament"
-      :files ["lib/testament.janet"
-              "init.janet"
-              "LICENSE"]}]}
+ :vendored [{:name "argy-bargy"
+             :url "https://github.com/pyrmont/argy-bargy"
+             :prefix "deps/argy-bargy"
+             :paths ["argy-bargy.janet"
+                     "LICENSE"]}
+            {:name "musty"
+             :url "https://github.com/pyrmont/musty"
+             :prefix "deps/musty"
+             :paths ["lib/musty.janet"
+                     "init.janet"
+                     "LICENSE"]}
+            {:name "testament"
+             :url "https://github.com/pyrmont/testament"
+             :prefix "deps/testament"
+             :paths ["lib/testament.janet"
+                     "init.janet"
+                     "LICENSE"]}]
 
- :executable ["bin/doco"]
- :source {:prefix "documentarian"
-          :files ["deps"
-                  "lib"
-                  "init.janet"]}}
+ :artifacts {:libraries [{:prefix "documentarian"
+                          :paths ["deps"
+                                  "lib"
+                                  "init.janet"]}]
+             :scripts [{:path "bin/documentarian"}]}}
