@@ -11,6 +11,11 @@ Documentarian makes it easy to take the docstrings you've already written for
 your code and turn them into a simple Markdown-formatted document. This document
 can be included in your repository and read easily on services like GitHub.
 
+> [!NOTE]
+> Documentarian is designed to work with Janet bundles that include a
+> `project.janet` file. For bundles that use `info.jdn`, use
+> [Jeep](http://github.com/pyrmont/jeep).
+
 ## Installation
 
 To install, run:
